@@ -26,7 +26,11 @@ import {
       <!-- <CardDescription>请选择</CardDescription> -->
     </CardHeader>
     <CardFoot class="flex flex-col space-y-2 items-center">
-        <Button class="w-full">创建面试房间</Button>
+      <form>
+          <div>
+          <Input style="width: 107%;" id="name" placeholder="请输入面试官提供的房间号" />
+          </div>
+      </form>
         <Button class="w-full">加入面试房间</Button>
     </CardFoot>
   </Card>

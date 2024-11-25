@@ -49,7 +49,7 @@ const onSubmit = form.handleSubmit((values) => {
         输入您的账号和密码
       </CardDescription>
     </CardHeader>
-    
+
     <CardContent>
       <form @submit.prevent="onSubmit" class="space-y-6">
         <FormField v-slot="{ field }" name="email">
@@ -102,15 +102,35 @@ const onSubmit = form.handleSubmit((values) => {
 </template>
 
 <style scoped>
+.w-full {
+  width: 100%;
+}
+
 .flex {
   display: flex;
 }
+
+.flex-col {
+  flex-direction: column;
+}
+
+.space-y-1> *+* {
+  margin-top: 0.8rem;
+}
+
+.space-y-2> *+* {
+  margin-top: 0.3rem;
+}
+
+
 .justify-center {
   justify-content: center;
 }
+
 .items-center {
   align-items: center;
 }
+
 .text-center {
   text-align: center;
 }
