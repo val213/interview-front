@@ -12,10 +12,10 @@ function login() {
 </script>
 
 <template>
-  <div>
-    <header>
+  <div class="flex justify-center items-center min-h-screen">
+    <!-- <header>
       <h1>面试子系统</h1>
-    </header>
+    </header> -->
     <main>
       <RouterView />
     </main>
@@ -23,13 +23,31 @@ function login() {
 </template>
 
 <style scoped>
-header {
+/* header {
   background-color: #42b983;
   color: white;
   padding: 1em;
   text-align: center;
-}
+} */
 main {
-  padding: 2em;
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  min-height: 100vh; /* 确保 main 占满整个视口高度 */
+}
+.flex {
+  display: flex;
+}
+.justify-center {
+  justify-content: center;
+}
+.items-center {
+  align-items: center;
+}
+.min-h-screen {
+  min-height: 100vh;
 }
 </style>

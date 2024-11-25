@@ -1,59 +1,49 @@
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
-const username = ref('')
-const password = ref('')
-const role = ref('')
-
-function login() {
-  if (username.value && password.value && role.value) {
-    router.push('/home')
-  } else {
-    alert('请填写所有字段')
-  }
-}
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 </script>
 
 <template>
-  <div>
-    <h2>登录</h2>
-    <div>
-      <label>
-        <input type="radio" v-model="role" value="interviewee" />
-        面试者
-      </label>
-      <label>
-        <input type="radio" v-model="role" value="interviewer" />
-        面试官
-      </label>
-    </div>
-    <div>
-      <input v-model="username" placeholder="用户名" />
-    </div>
-    <div>
-      <input v-model="password" type="password" placeholder="密码" />
-    </div>
-    <button @click="login">登录</button>
-  </div>
+  <Card class="w-full max-w-sm" style="width: 400px; height: 300px;">
+    <CardHeader class="flex justify-center">
+      <CardTitle class="text-center">
+        登录面试子系统
+      </CardTitle>
+      <CardDescription class="text-center">
+        输入您的账号和密码
+      </CardDescription>
+    </CardHeader>
+    <CardContent class="grid gap-4">
+      <div class="grid gap-2">
+        <Label for="account">Accout</Label>
+        <Input id="email" type="email" placeholder="your account" required />
+      </div>
+      <div class="grid gap-2">
+        <Label for="password">Password</Label>
+        <Input id="password" type="password" placeholder= "your password"required />
+      </div>
+    </CardContent>
+    <CardFooter class="flex justify-center">
+      <Button class="w-full">
+        登录
+      </Button>
+    </CardFooter>
+  </Card>
 </template>
 
 <style scoped>
-div {
-  margin-bottom: 1em;
+.flex {
+  display: flex;
 }
-label {
-  margin-right: 1em;
+.justify-center {
+  justify-content: center;
 }
-button {
-  padding: 0.5em 1em;
-  background-color: #42b983;
-  color: white;
-  border: none;
-  cursor: pointer;
+.items-center {
+  align-items: center;
 }
-button:hover {
-  background-color: #369f6b;
+.text-center {
+  text-align: center;
 }
 </style>

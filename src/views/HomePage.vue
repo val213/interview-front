@@ -16,7 +16,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Sched from '../components/sched.vue'
-import axios from 'axios'
+
 
 const router = useRouter()
 const roomnumber = ref('')
