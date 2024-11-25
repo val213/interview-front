@@ -22,16 +22,12 @@ import {
 <template>
   <Card class="w-[100px] space-y-1" style="width: 350px; height: 200px;">
     <CardHeader>
-      <CardTitle class="text-center">你好！面试者</CardTitle>
+      <CardTitle class="text-center">你好！面试官</CardTitle>
       <!-- <CardDescription>请选择</CardDescription> -->
     </CardHeader>
     <CardFoot class="flex flex-col space-y-2 items-center">
-        <form>
-            <div>
-            <Input style="width: 107%;" id="name" placeholder="请输入面试官提供的房间号" />
-            </div>
-        </form>
         <Button class="w-full">创建面试房间</Button>
+        <Button class="w-full">加入面试房间</Button>
     </CardFoot>
   </Card>
 </template>
