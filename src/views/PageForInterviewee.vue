@@ -22,7 +22,7 @@ import {
 <template>
   <Card class="w-[100px] space-y-1" style="width: 350px; height: 250px;">
     <CardHeader>
-      <CardTitle class="text-center">你好！面试官</CardTitle>
+      <CardTitle class="text-center">你好！面试者</CardTitle>
       <!-- <CardDescription>请选择</CardDescription> -->
     </CardHeader>
     <CardContent>
@@ -35,6 +35,7 @@ import {
     <CardFoot class="flex justify-between px-6 pb-6">
         <Button class="w-full">创建房间</Button>
         <Button class="w-full">加入房间</Button>
+
     </CardFoot>
   </Card>
 </template>

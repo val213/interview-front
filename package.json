@@ -9,6 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^6.7.1",
+    "@heroicons/vue": "^2.2.0",
+    "@vee-validate/zod": "^4.14.7",
     "@vueuse/core": "^11.3.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
@@ -17,8 +20,11 @@
     "radix-vue": "^1.9.10",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
+    "vaul-vue": "^0.2.0",
+    "vee-validate": "^4.14.7",
     "vue": "^3.5.12",
-    "vue-router": "^4.4.5"
+    "vue-router": "^4.4.5",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^22.9.3",
