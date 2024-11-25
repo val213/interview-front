@@ -9,11 +9,28 @@
     "preview": "vite preview"
   },
   "dependencies": {
+<<<<<<< HEAD
     "vue": "^3.5.12",
     "vue-router": "^4.4.5"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.1.4",
     "vite": "^5.4.11"
+=======
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "lucide-vue-next": "^0.460.0",
+    "radix-vue": "^1.9.10",
+    "tailwind-merge": "^2.5.5",
+    "tailwindcss-animate": "^1.0.7",
+    "vue": "^3.5.12"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.3",
+    "@vitejs/plugin-vue": "^5.1.4",
+    "autoprefixer": "^10.4.20",
+    "tailwindcss": "^3.4.15",
+    "vite": "^5.4.10"
+>>>>>>> d007b47546439144e0e86782a1affadbd0868e3a
   }
 }
