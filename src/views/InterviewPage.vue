@@ -10,7 +10,6 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable'
 import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
 import { CornerDownLeft, Paperclip, Mic } from 'lucide-vue-next'
 import { Badge } from '@/components/ui/badge'
 import CameraIcon from '@/assets/camera.svg'
@@ -91,6 +90,20 @@ const stopInterview = () => {
       description: "本次面试已结束！",
       variant: "default"
     })
+    // 如果是面试官，重定向到面试结果反馈页面
+    if (localStorage.getItem('role') === 'interviewer') {
+      // 从url获取面试id，从localStorage获取面试官id
+      redirectToInterviewResult(
+        getQueryParam('interviewId') || '',
+        localStorage.getItem('interviewerId') || ''
+      )
+    }else{
+      // 如果是面试者，重定向到面试结果页面
+      redirectToInterviewScore(
+        getQueryParam('interviewId') || '',
+        localStorage.getItem('intervieweeId') || ''
+      )
+    }
 
   } catch (error) {
     console.error('无法关闭摄像头', error)
@@ -100,6 +113,26 @@ const stopInterview = () => {
       variant: "destructive"
     })
   }
+}
+
+// 重定向到面试结果反馈页面的函数
+const redirectToInterviewResult = (interviewId: string, interviewer: string) => {
+  const baseUrl = 'http://localhost:5173/result?'
+  const url = new URL(baseUrl)
+  url.searchParams.append('interviewId', interviewId)
+  url.searchParams.append('interviewer', interviewer)
+
+  window.location.href = url.toString()
+}
+
+// 重定向到面试结果页面的函数
+const redirectToInterviewScore = (interviewId: string, interviewee: string) => {
+  const baseUrl = 'http://localhost:5173/score?'
+  const url = new URL(baseUrl)
+  url.searchParams.append('interviewId', interviewId)
+  url.searchParams.append('interviewee', interviewee)
+
+  window.location.href = url.toString()
 }
 
 // 用户发送消息函数
@@ -112,6 +145,26 @@ const sendMessage = () => {
     })
     newMessage.value = ''
   }
+}
+
+function getQueryParam(param: string) {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get(param);
+}
+
+const interviewMetadata = ref({
+  interviewId: '',
+  interviewer: '',
+  interviewee: ''
+});
+
+function fetchInterviewMetadata() {
+  // 从 URL 参数获取面试元数据
+  interviewMetadata.value = {
+    interviewId: getQueryParam('interviewId'),
+    interviewer: getQueryParam('interviewer'),
+    interviewee: getQueryParam('interviewee')
+  };
 }
 </script>
 
