@@ -32,8 +32,12 @@ const form = useForm({
 
 const onSubmit = form.handleSubmit((values) => {
   if (values.accountType === 'interviewer') {
+    localStorage.setItem('role', 'interviewer')
+    localStorage.setItem('interviewerId', values.email)
     router.push('/interviewer')
   } else if (values.accountType === 'interviewee') {
+    localStorage.setItem('role', 'interviewee')
+    localStorage.setItem('intervieweeId', values.email)
     router.push('/interviewee')
   }
 })

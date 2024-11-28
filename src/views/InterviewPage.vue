@@ -10,8 +10,8 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable'
 import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
 import { CornerDownLeft, Paperclip, Mic } from 'lucide-vue-next'
+import { Badge } from '@/components/ui/badge'
 import CameraIcon from '@/assets/camera.svg'
 
 const router = useRouter()
@@ -22,9 +22,12 @@ const usingroomnumber = ref('')
 const isCameraOn = ref(false)
 
 // 示例聊天消息
-const messages = ref<string[]>([])
+const messages = ref([
+  { sender: '系统消息', timestamp: 1633028400000, text: '面试即将开始。' },
+  { sender: '面试官', timestamp: 1633024800000, text: 'Hello!' },
+  { sender: '张三', timestamp: 1633032000000, text: 'Hi there!' },
+])
 const newMessage = ref('')
-
 // 初始化房间号
 onMounted(() => {
   usingroomnumber.value = localStorage.getItem('usingroomnumber') || ''
@@ -88,6 +91,20 @@ const stopInterview = () => {
       description: "本次面试已结束！",
       variant: "default"
     })
+    // 如果是面试官，重定向到面试结果反馈页面
+    if (localStorage.getItem('role') === 'interviewer') {
+      // 从url获取面试id，从localStorage获取面试官id
+      redirectToInterviewResult(
+        getQueryParam('interviewId') || '',
+        localStorage.getItem('interviewerId') || ''
+      )
+    }else{
+      // 如果是面试者，重定向到面试结果页面
+      redirectToInterviewScore(
+        getQueryParam('interviewId') || '',
+        localStorage.getItem('intervieweeId') || ''
+      )
+    }
 
   } catch (error) {
     console.error('无法关闭摄像头', error)
@@ -99,22 +116,68 @@ const stopInterview = () => {
   }
 }
 
-// 发送消息函数
+// 重定向到面试结果反馈页面的函数
+const redirectToInterviewResult = (interviewId: string, interviewer: string) => {
+  const baseUrl = 'http://localhost:5173/result?'
+  const url = new URL(baseUrl)
+  url.searchParams.append('interviewId', interviewId)
+  url.searchParams.append('interviewer', interviewer)
+
+  window.location.href = url.toString()
+}
+
+// 重定向到面试结果页面的函数
+const redirectToInterviewScore = (interviewId: string, interviewee: string) => {
+  const baseUrl = 'http://localhost:5173/score?'
+  const url = new URL(baseUrl)
+  url.searchParams.append('interviewId', interviewId)
+  url.searchParams.append('interviewee', interviewee)
+
+  window.location.href = url.toString()
+}
+
+// 用户发送消息函数
 const sendMessage = () => {
   if (newMessage.value.trim() !== '') {
-    messages.value.push(newMessage.value.trim())
+    messages.value.push({
+      sender: '张三', // Replace with the actual sender
+      timestamp: Date.now(),
+      text: newMessage.value.trim()
+    })
     newMessage.value = ''
   }
+}
+
+function getQueryParam(param: string) {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get(param);
+}
+
+const interviewMetadata = ref({
+  interviewId: '',
+  interviewer: '',
+  interviewee: ''
+});
+
+function fetchInterviewMetadata() {
+  // 从 URL 参数获取面试元数据
+  interviewMetadata.value = {
+    interviewId: getQueryParam('interviewId'),
+    interviewer: getQueryParam('interviewer'),
+    interviewee: getQueryParam('interviewee')
+  };
 }
 </script>
 
 <template>
-  <div class="flex h-screen w-full overflow-hidden bg-background">
-    <ResizablePanelGroup direction="horizontal" class="w-full">
+    <ResizablePanelGroup
+      id="handle-demo-group-1"
+      direction="horizontal"
+      class="h-full w-full rounded-lg border"
+    >
       <!-- Video Panel -->
-      <ResizablePanel :default-size="70" class="min-w-[400px]">
-        <div class="h-full p-6">
-          <Card class="flex h-full flex-col border-2">
+      <ResizablePanel id="handle-demo-panel-1" :default-size="50">
+          <Card class="flex w-full flex-col border-2">
             <CardHeader class="space-y-2 pb-4">
               <div class="flex items-center justify-between">
                 <CardTitle class="text-2xl font-bold">视频面试</CardTitle>
@@ -124,7 +187,7 @@ const sendMessage = () => {
               </div>
             </CardHeader>
             
-            <CardContent class="flex flex-1 flex-col gap-6 p-6">
+            <CardContent class="flex flex-1 flex-col gap-6 p-6 h-full">
               <div class="relative flex-1 overflow-hidden rounded-xl bg-slate-100">
                 <video 
                   v-show="isCameraOn" 
@@ -165,50 +228,64 @@ const sendMessage = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
       </ResizablePanel>
 
-      <ResizableHandle />
+      <ResizableHandle id="handle-demo-handle-1" with-handle />
 
       <!-- Chat Panel -->
-      <ResizablePanel :default-size="30" class="min-w-[300px]">
-        <div class="h-full p-6">
-          <Card class="flex h-full flex-col border-2">
+      <ResizablePanel id="handle-demo-panel-2" :default-size="50">
+          <Card class="flex w-full flex-col border-2">
             <CardHeader class="pb-4">
               <CardTitle>对话记录</CardTitle>
             </CardHeader>
-            <CardContent class="flex flex-1 flex-col gap-4">
-              <div class="flex-1 overflow-y-auto">
-                <div class="space-y-4 px-2">
-                  <div v-for="(message, index) in messages" 
-                       :key="index" 
-                       class="rounded-lg bg-muted p-4 text-sm shadow-sm transition-all hover:bg-muted/80">
-                    {{ message }}
-                  </div>
-                </div>
-              </div>
-              
-              <div class="border-t pt-4">
-                <form @submit.prevent="sendMessage" class="flex flex-col gap-3">
-                  <Textarea
-                    v-model="newMessage"
-                    placeholder="输入消息..."
-                    class="min-h-[100px] resize-none rounded-lg border-2 focus:border-primary"
-                  />
-                  <Button type="submit" class="w-full">
-                    发送消息
-                    <CornerDownLeft class="ml-2 h-4 w-4" />
-                  </Button>
-                </form>
-              </div>
-            </CardContent>
+            <v-container class="h-full">
+              <v-row class="h-full">
+                <v-col class="h-full">
+                  <CardContent class="flex flex-1 flex-col gap-4 h-full">
+                    <div class="flex-1 overflow-y-auto">
+                      <div class="space-y-4 px-2">
+                        <div v-for="(message, index) in messages" 
+                             :key="index" 
+                             class="flex flex-col space-y-1">
+                          <div :class="{
+                            'text-left': message.sender === '面试官' || message.sender === '系统消息',
+                            'text-right': message.sender !== '面试官' && message.sender !== '系统消息'
+                          }">
+                          <div class="text-xs text-gray-500">
+                            {{ message.sender }} - {{ new Date(message.timestamp).toLocaleString() }}
+                          </div>
+                            <Badge :variant="message.sender === '面试官' ? 'outline' : message.sender === '系统消息' ? 'secondary' : 'default'">
+                              {{ message.text }}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </v-col>
+              </v-row>
+              <v-row>
+                <v-col>
+                  <CardContent class="border-t pt-4">
+                    <form @submit.prevent="sendMessage" class="flex flex-col gap-3">
+                      <Textarea
+                        v-model="newMessage"
+                        placeholder="输入消息，友好交流..."
+                        class="min-h-[100px] resize-none rounded-lg border-2 focus:border-primary"
+                      />
+                      <Button type="submit" class="w-full">
+                        发送消息
+                        <CornerDownLeft class="ml-2 h-4 w-4" />
+                      </Button>
+                    </form>
+                  </CardContent>
+                </v-col>
+              </v-row>
+            </v-container>
           </Card>
-        </div>
       </ResizablePanel>
     </ResizablePanelGroup>
-  </div>
 </template>
-
 <style scoped>
 :deep(.resizable-handle) {
   width: 4px;
@@ -218,5 +295,12 @@ const sendMessage = () => {
 
 :deep(.resizable-handle:hover) {
   background-color: #d1d5db;
+}
+
+.text-left {
+  text-align: left;
+}
+.text-right {
+  text-align: right;
 }
 </style>
