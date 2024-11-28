@@ -19,6 +19,6 @@ const delegatedProps = computed(() => {
 <template>
   <SelectSeparator
     v-bind="delegatedProps"
-    :class="cn('tailwind.config.js-mx-1 tailwind.config.jsmy-1 tailwind.config.jsh-px tailwind.config.jsbg-muted', props.class)"
+    :class="cn('-mx-1 my-1 h-px bg-muted', props.class)"
   />
 </template>

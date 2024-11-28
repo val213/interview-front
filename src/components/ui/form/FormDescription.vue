@@ -12,7 +12,7 @@ const { formDescriptionId } = useFormField();
 <template>
   <p
     :id="formDescriptionId"
-    :class="cn('tailwind.config.jstext-sm tailwind.config.jstext-muted-foreground', props.class)"
+    :class="cn('text-sm text-muted-foreground', props.class)"
   >
     <slot />
   </p>

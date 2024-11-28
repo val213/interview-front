@@ -33,13 +33,13 @@ const forwardedProps = useForwardProps(delegatedProps);
     v-bind="forwardedProps"
     :class="
       cn(
-        'tailwind.config.jsaspect-square tailwind.config.jsh-4 tailwind.config.jsw-4 tailwind.config.jsrounded-full tailwind.config.jsborder tailwind.config.jsborder-primary tailwind.config.jstext-primary tailwind.config.jsring-offset-background focus:tailwind.config.jsoutline-none focus-visible:tailwind.config.jsring-2 focus-visible:tailwind.config.jsring-ring focus-visible:tailwind.config.jsring-offset-2 disabled:tailwind.config.jscursor-not-allowed disabled:tailwind.config.jsopacity-50',
+        'aspect-square h-4 w-4 rounded-full border border-primary text-primary ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
         props.class,
       )
     "
   >
-    <RadioGroupIndicator class="tailwind.config.jsflex tailwind.config.jsitems-center tailwind.config.jsjustify-center">
-      <Circle class="tailwind.config.jsh-2.5 tailwind.config.jsw-2.5 tailwind.config.jsfill-current tailwind.config.jstext-current" />
+    <RadioGroupIndicator class="flex items-center justify-center">
+      <Circle class="h-2.5 w-2.5 fill-current text-current" />
     </RadioGroupIndicator>
   </RadioGroupItem>
 </template>

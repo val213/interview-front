@@ -9,7 +9,7 @@ const props = defineProps({
 <template>
   <h3
     :class="
-      cn('tailwind.config.jstext-2xl tailwind.config.jsfont-semibold tailwind.config.jsleading-none tailwind.config.jstracking-tight', props.class)
+      cn('text-2xl font-semibold leading-none tracking-tight', props.class)
     "
   >
     <slot />

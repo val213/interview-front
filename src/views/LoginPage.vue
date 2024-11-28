@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { useRouter } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -32,12 +32,8 @@ const form = useForm({
 
 const onSubmit = form.handleSubmit((values) => {
   if (values.accountType === 'interviewer') {
-    localStorage.setItem('role', 'interviewer')
-    localStorage.setItem('interviewerId', values.email)
     router.push('/interviewer')
   } else if (values.accountType === 'interviewee') {
-    localStorage.setItem('role', 'interviewee')
-    localStorage.setItem('intervieweeId', values.email)
     router.push('/interviewee')
   }
 })
@@ -104,38 +100,3 @@ const onSubmit = form.handleSubmit((values) => {
     </CardFooter>
   </Card>
 </template>
-
-<style scoped>
-.w-full {
-  width: 100%;
-}
-
-.flex {
-  display: flex;
-}
-
-.flex-col {
-  flex-direction: column;
-}
-
-.space-y-1> *+* {
-  margin-top: 0.8rem;
-}
-
-.space-y-2> *+* {
-  margin-top: 0.3rem;
-}
-
-
-.justify-center {
-  justify-content: center;
-}
-
-.items-center {
-  align-items: center;
-}
-
-.text-center {
-  text-align: center;
-}
-</style>

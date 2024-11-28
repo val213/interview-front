@@ -22,7 +22,7 @@ const delegatedProps = computed(() => {
     v-bind="delegatedProps"
     :class="
       cn(
-        'tailwind.config.jstext-sm tailwind.config.jsfont-medium tailwind.config.jsleading-none peer-disabled:tailwind.config.jscursor-not-allowed peer-disabled:tailwind.config.jsopacity-70',
+        'text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
         props.class,
       )
     "

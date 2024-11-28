@@ -15,7 +15,7 @@ const { error, formItemId } = useFormField();
 
 <template>
   <Label
-    :class="cn(error && 'tailwind.config.jstext-destructive', props.class)"
+    :class="cn(error && 'text-destructive', props.class)"
     :for="formItemId"
   >
     <slot />
