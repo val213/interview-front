@@ -122,7 +122,7 @@ onMounted(() => {
           </FormItem>
         </FormField>
 
-        <FormField v-slot="{ field }" name="interviewDate">
+        <!-- <FormField v-slot="{ field }" name="interviewDate">
           <FormItem>
             <FormLabel>面试日期：</FormLabel>
             <FormControl>
@@ -130,7 +130,7 @@ onMounted(() => {
             </FormControl>
             <FormMessage />
           </FormItem>
-        </FormField>
+        </FormField> -->
 
         <FormField v-slot="{ field }" name="interviewer">
           <FormItem>
