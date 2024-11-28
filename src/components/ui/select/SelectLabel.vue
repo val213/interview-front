@@ -12,7 +12,7 @@ const props = defineProps({
 
 <template>
   <SelectLabel
-    :class="cn('tailwind.config.jspy-1.5 tailwind.config.jspl-8 tailwind.config.jspr-2 tailwind.config.jstext-sm tailwind.config.jsfont-semibold', props.class)"
+    :class="cn('py-1.5 pl-8 pr-2 text-sm font-semibold', props.class)"
   >
     <slot />
   </SelectLabel>

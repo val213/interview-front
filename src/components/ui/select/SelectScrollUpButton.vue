@@ -23,11 +23,11 @@ const forwardedProps = useForwardProps(delegatedProps);
   <SelectScrollUpButton
     v-bind="forwardedProps"
     :class="
-      cn('tailwind.config.jsflex tailwind.config.jscursor-default tailwind.config.jsitems-center tailwind.config.jsjustify-center tailwind.config.jspy-1', props.class)
+      cn('flex cursor-default items-center justify-center py-1', props.class)
     "
   >
     <slot>
-      <ChevronUp class="tailwind.config.jsh-4 tailwind.config.jsw-4" />
+      <ChevronUp class="h-4 w-4" />
     </slot>
   </SelectScrollUpButton>
 </template>

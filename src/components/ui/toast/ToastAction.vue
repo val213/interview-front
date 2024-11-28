@@ -22,7 +22,7 @@ const delegatedProps = computed(() => {
     v-bind="delegatedProps"
     :class="
       cn(
-        'tailwind.config.jsinline-flex tailwind.config.jsh-8 tailwind.config.jsshrink-0 tailwind.config.jsitems-center tailwind.config.jsjustify-center tailwind.config.jsrounded-md tailwind.config.jsborder tailwind.config.jsbg-transparent tailwind.config.jspx-3 tailwind.config.jstext-sm tailwind.config.jsfont-medium tailwind.config.jsring-offset-background tailwind.config.jstransition-colors hover:tailwind.config.jsbg-secondary focus:tailwind.config.jsoutline-none focus:tailwind.config.jsring-2 focus:tailwind.config.jsring-ring focus:tailwind.config.jsring-offset-2 disabled:tailwind.config.jspointer-events-none disabled:tailwind.config.jsopacity-50 group-[.destructive]:tailwind.config.jsborder-muted/40 group-[.destructive]:hover:tailwind.config.jsborder-destructive/30 group-[.destructive]:hover:tailwind.config.jsbg-destructive group-[.destructive]:hover:tailwind.config.jstext-destructive-foreground group-[.destructive]:focus:tailwind.config.jsring-destructive',
+        'inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium ring-offset-background transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 group-[.destructive]:border-muted/40 group-[.destructive]:hover:border-destructive/30 group-[.destructive]:hover:bg-destructive group-[.destructive]:hover:text-destructive-foreground group-[.destructive]:focus:ring-destructive',
         props.class,
       )
     "

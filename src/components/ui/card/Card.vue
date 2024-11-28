@@ -10,7 +10,7 @@ const props = defineProps({
   <div
     :class="
       cn(
-        'tailwind.config.jsrounded-lg tailwind.config.jsborder tailwind.config.jsbg-card tailwind.config.jstext-card-foreground tailwind.config.jsshadow-sm',
+        'rounded-lg border bg-card text-card-foreground shadow-sm',
         props.class,
       )
     "

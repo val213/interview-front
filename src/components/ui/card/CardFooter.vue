@@ -7,7 +7,7 @@ const props = defineProps({
 </script>
 
 <template>
-  <div :class="cn('tailwind.config.jsflex tailwind.config.jsitems-center tailwind.config.jsp-6 tailwind.config.jspt-0', props.class)">
+  <div :class="cn('flex items-center p-6 pt-0', props.class)">
     <slot />
   </div>
 </template>

@@ -7,7 +7,7 @@ const props = defineProps({
 </script>
 
 <template>
-  <div :class="cn('tailwind.config.jsflex tailwind.config.jsflex-col tailwind.config.jsgap-y-1.5 tailwind.config.jsp-6', props.class)">
+  <div :class="cn('flex flex-col gap-y-1.5 p-6', props.class)">
     <slot />
   </div>
 </template>

@@ -1,43 +1,67 @@
 <script setup>
-import { ref } from 'vue'
-
-defineProps({
-  msg: String,
-})
-
-const count = ref(0)
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 </script>
 
 <template>
-  <h1>{{ msg }}</h1>
-
-  <div class="card">
-    <button type="button" @click="count++">count is {{ count }}</button>
-    <p>
-      Edit
-      <code>components/HelloWorld.vue</code> to test HMR
-    </p>
-  </div>
-
-  <p>
-    Check out
-    <a href="https://vuejs.org/guide/quick-start.html#local" target="_blank"
-      >create-vue</a
-    >, the official Vue + Vite starter
-  </p>
-  <p>
-    Learn more about IDE Support for Vue in the
-    <a
-      href="https://vuejs.org/guide/scaling-up/tooling.html#ide-support"
-      target="_blank"
-      >Vue Docs Scaling up Guide</a
-    >.
-  </p>
-  <p class="read-the-docs">Click on the Vite and Vue logos to learn more</p>
+  <Card class="w-[350px]">
+    <CardHeader>
+      <CardTitle>Create project</CardTitle>
+      <CardDescription>Deploy your new project in one-click.</CardDescription>
+    </CardHeader>
+    <CardContent>
+      <form>
+        <div class="grid items-center w-full gap-4">
+          <div class="flex flex-col space-y-1.5">
+            <Label for="name" class="font-bold">Name</Label>
+            <Input id="name" placeholder="Name of your project" />
+          </div>
+          <div class="flex flex-col space-y-1.5">
+            <Label for="framework">Framework</Label>
+            <Select>
+              <SelectTrigger id="framework">
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
+              <SelectContent position="popper">
+                <SelectItem value="nuxt">
+                  Nuxt
+                </SelectItem>
+                <SelectItem value="next">
+                  Next.js
+                </SelectItem>
+                <SelectItem value="sveltekit">
+                  SvelteKit
+                </SelectItem>
+                <SelectItem value="astro">
+                  Astro
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </form>
+    </CardContent>
+    <CardFooter class="flex justify-between px-6 pb-6">
+      <Button variant="outline">
+        Cancel
+      </Button>
+      <Button>Deploy</Button>
+    </CardFooter>
+  </Card>
 </template>
-
-<style scoped>
-.read-the-docs {
-  color: #888;
-}
-</style>

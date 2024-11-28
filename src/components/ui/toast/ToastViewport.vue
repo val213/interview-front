@@ -23,7 +23,7 @@ const delegatedProps = computed(() => {
     v-bind="delegatedProps"
     :class="
       cn(
-        'tailwind.config.jsfixed tailwind.config.jstop-0 tailwind.config.jsz-[100] tailwind.config.jsflex tailwind.config.jsmax-h-screen tailwind.config.jsw-full tailwind.config.jsflex-col-reverse tailwind.config.jsp-4 sm:tailwind.config.jsbottom-0 sm:tailwind.config.jsright-0 sm:tailwind.config.jstop-auto sm:tailwind.config.jsflex-col md:tailwind.config.jsmax-w-[420px]',
+        'fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]',
         props.class,
       )
     "

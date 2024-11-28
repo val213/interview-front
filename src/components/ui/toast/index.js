@@ -11,13 +11,13 @@ export { toast, useToast } from './use-toast';
 import { cva } from 'class-variance-authority';
 
 export const toastVariants = cva(
-  'tailwind.config.jsgroup tailwind.config.jspointer-events-auto tailwind.config.jsrelative tailwind.config.jsflex tailwind.config.jsw-full tailwind.config.jsitems-center tailwind.config.jsjustify-between tailwind.config.jsspace-x-4 tailwind.config.jsoverflow-hidden tailwind.config.jsrounded-md tailwind.config.jsborder tailwind.config.jsp-6 tailwind.config.jspr-8 tailwind.config.jsshadow-lg tailwind.config.jstransition-all data-[swipe=cancel]:tailwind.config.jstranslate-x-0 data-[swipe=end]:tailwind.config.jstranslate-x-[--radix-toast-swipe-end-x] data-[swipe=move]:tailwind.config.jstranslate-x-[--radix-toast-swipe-move-x] data-[swipe=move]:tailwind.config.jstransition-none data-[state=open]:tailwind.config.jsanimate-in data-[state=closed]:tailwind.config.jsanimate-out data-[swipe=end]:tailwind.config.jsanimate-out data-[state=closed]:tailwind.config.jsfade-out-80 data-[state=closed]:tailwind.config.jsslide-out-to-right-full data-[state=open]:tailwind.config.jsslide-in-from-top-full data-[state=open]:sm:tailwind.config.jsslide-in-from-bottom-full',
+  'group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[--radix-toast-swipe-end-x] data-[swipe=move]:translate-x-[--radix-toast-swipe-move-x] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full',
   {
     variants: {
       variant: {
-        default: 'tailwind.config.jsborder tailwind.config.jsbg-background tailwind.config.jstext-foreground',
+        default: 'border bg-background text-foreground',
         destructive:
-          'tailwind.config.jsdestructive tailwind.config.jsgroup tailwind.config.jsborder-destructive tailwind.config.jsbg-destructive tailwind.config.jstext-destructive-foreground',
+          'destructive group border-destructive bg-destructive text-destructive-foreground',
       },
     },
     defaultVariants: {

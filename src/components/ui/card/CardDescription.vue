@@ -7,7 +7,7 @@ const props = defineProps({
 </script>
 
 <template>
-  <p :class="cn('tailwind.config.jstext-sm tailwind.config.jstext-muted-foreground', props.class)">
+  <p :class="cn('text-sm text-muted-foreground', props.class)">
     <slot />
   </p>
 </template>
