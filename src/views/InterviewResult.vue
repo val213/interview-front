@@ -131,10 +131,15 @@ onMounted(() => {
             <FormMessage />
           </FormItem>
         </FormField>
-
         <!-- 面试者信息 -->
         <FormField v-slot="{ field }" name="intervieweeId">
-          
+          <FormItem>
+            <FormLabel>面试者ID</FormLabel>
+            <FormControl>
+              <Input v-bind="field" placeholder="请输入面试者ID" />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
         </FormField>
 
         <!-- 评分维度 -->

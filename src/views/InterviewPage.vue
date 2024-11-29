@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -23,9 +23,9 @@ const isCameraOn = ref(false)
 
 // 示例聊天消息
 const messages = ref([
-  { sender: '系统消息', timestamp: 1833028400000, text: '面试即将开始。' },
-  { sender: '面试官', timestamp: 1833024800000, text: 'Hello!' },
-  { sender: '面试者', timestamp: 1833032000000, text: 'Hi there!' },
+  { sender: '系统消息', timestamp: 1833028400000, text: '面试即将开始，请双方做好准备！' },
+  { sender: '面试官', timestamp: 1833028400000, text: '你好，请问你的姓名是？' },
+  { sender: '面试者', timestamp: 1833028400000, text: '我叫小明，很高兴认识您！' },
 ])
 const getVariant = (sender: string) => {
   if (sender === '面试官') return 'outline'
@@ -33,30 +33,67 @@ const getVariant = (sender: string) => {
   return 'default'
 }
 const newMessage = ref('')
+const roleMapping = {
+  interviewer: '面试官',
+  interviewee: '面试者',
+}
+
+const userRole = ref(roleMapping[localStorage.getItem('role')] || '未知角色')
+let socket: WebSocket | null = null
+
 // 初始化房间号，从url中的interviewId=tk3xjf 获得
 onMounted(() => {
   usingroomnumber.value = getQueryParam('interviewId') || ''
   fetchInterviewMetadata()
+  connectWebSocket()
 })
+
+onBeforeUnmount(() => {
+  if (socket) {
+    socket.close()
+  }
+})
+
+const connectWebSocket = () => {
+  socket = new WebSocket('ws://localhost:8080/chat')
+
+  socket.onmessage = (event) => {
+    const messageData = JSON.parse(event.data)
+    // 检查消息的发送者是否是当前用户
+    if (messageData.senderName !== userRole.value) {
+      messages.value.push({
+        sender: messageData.senderName,
+        timestamp: new Date(messageData.sendAt).getTime(),
+        text: messageData.content
+      })
+    }
+  }
+
+  socket.onclose = () => {
+    console.log('WebSocket connection closed')
+  }
+
+  socket.onerror = (error) => {
+    console.error('WebSocket error:', error)
+  }
+}
 
 // 开始面试函数
 const startInterview = async () => {
   try {
-    // 如果已经有媒体流，先停止它
     if (mediaStream.value) {
       mediaStream.value.getTracks().forEach(track => track.stop())
       mediaStream.value = null
       isCameraOn.value = false
     }
 
-    // 请求摄像头权限
     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
     const videoElement = videoRef.value
 
     if (videoElement) {
       videoElement.srcObject = stream
-      videoElement.muted = true // 消除自动播放限制
-      videoElement.playsInline = true // 确保在移动设备上内联播放
+      videoElement.muted = true
+      videoElement.playsInline = true
       await videoElement.play().catch(err => {
         console.error('视频播放错误:', err)
       })
@@ -97,21 +134,14 @@ const stopInterview = () => {
       description: "本次面试已结束！",
       variant: "default"
     })
-    // 如果是面试官，重定向到面试结果反馈页面
     if (localStorage.getItem('role') === 'interviewer') {
-      // 从url获取面试id，从localStorage获取面试官id
       redirectToInterviewResult(
         getQueryParam('interviewId') || '',
         localStorage.getItem('interviewerId') || ''
       )
-    }else{
-      // 如果是面试者，重定向到面试结果页面
-      redirectToInterviewScore(
-        getQueryParam('interviewId') || '',
-        localStorage.getItem('intervieweeId') || ''
-      )
+    } else {
+      router.push('/interviewee?intervieweeId=' + localStorage.getItem('intervieweeId'))
     }
-
   } catch (error) {
     console.error('无法关闭摄像头', error)
     toast({
@@ -122,7 +152,6 @@ const stopInterview = () => {
   }
 }
 
-// 重定向到面试结果反馈页面的函数
 const redirectToInterviewResult = (interviewId: string, interviewer: string) => {
   const baseUrl = 'http://localhost:5173/result?'
   const url = new URL(baseUrl)
@@ -132,7 +161,6 @@ const redirectToInterviewResult = (interviewId: string, interviewer: string) => 
   window.location.href = url.toString()
 }
 
-// 重定向到面试结果页面的函数
 const redirectToInterviewScore = (interviewId: string, interviewee: string) => {
   const baseUrl = 'http://localhost:5173/score?'
   const url = new URL(baseUrl)
@@ -142,15 +170,35 @@ const redirectToInterviewScore = (interviewId: string, interviewee: string) => {
   window.location.href = url.toString()
 }
 
-// 用户发送消息函数
-const sendMessage = () => {
-  if (newMessage.value.trim() !== '') {
+const sendMessage = (message, sender) => {
+  if (message.trim() !== '') {
+    const now = new Date()
+    const formattedDate = now.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).replace(/\//g, '-').replace(',', '')
+
+    const messageData = {
+      content: message.trim(),
+      sendAt: formattedDate, // 当前时间
+      senderName: sender
+    }
+
+    if (socket) {
+      socket.send(JSON.stringify(messageData))
+    }
+
     messages.value.push({
-      sender: localStorage.getItem('role') === 'interviewer' ? '面试官' : '面试者',
+      sender: sender,
       timestamp: Date.now(),
-      text: newMessage.value.trim()
+      text: message.trim()
     })
-    newMessage.value = ''
+    newMessage.value = '' // 清空输入区域
   }
 }
 
@@ -166,12 +214,15 @@ const interviewMetadata = ref({
 });
 
 function fetchInterviewMetadata() {
-  // 从 URL 参数获取面试元数据
   interviewMetadata.value = {
     interviewId: getQueryParam('interviewId'),
     interviewer: getQueryParam('interviewer'),
     interviewee: getQueryParam('interviewee')
   };
+}
+
+const handleSubmit = () => {
+  sendMessage(newMessage.value, userRole.value)
 }
 </script>
 
@@ -254,14 +305,15 @@ function fetchInterviewMetadata() {
                         <div v-for="(message, index) in messages" 
                              :key="index" 
                              class="flex flex-col space-y-1">
-                          <div :class="{
-                            'text-left': message.sender === '面试官' || message.sender === '系统消息',
-                            'text-right': message.sender !== '面试官' && message.sender !== '系统消息'
+                            <div :class="{
+                            'text-left': message.sender !== userRole && message.sender !== '系统消息',
+                            'text-right': message.sender === userRole && message.sender !== '系统消息',
+                            'text-center': message.sender === '系统消息'
                           }">
                           <div class="text-xs text-gray-500">
                             {{ message.sender }} - {{ new Date(message.timestamp).toLocaleString() }}
                           </div>
-                            <Badge :variant = getVariant(message.sender)>
+                            <Badge :variant="getVariant(message.sender)">
                               {{ message.text }}
                             </Badge>
                           </div>
@@ -274,7 +326,7 @@ function fetchInterviewMetadata() {
             <!-- 消息输入区域 -->
             <div class="p-4 border-t mt-auto">
               <CardContent class="border-t pt-4">
-                    <form @submit.prevent="sendMessage" class="flex flex-col gap-3">
+                    <form @submit.prevent="handleSubmit" class="flex flex-col gap-3">
                       <Textarea
                         v-model="newMessage"
                         placeholder="输入消息，友好交流..."
@@ -292,6 +344,7 @@ function fetchInterviewMetadata() {
     </ResizablePanelGroup>
   </div>
 </template>
+
 <style scoped>
 :deep(.resizable-handle) {
   width: 4px;
@@ -308,5 +361,8 @@ function fetchInterviewMetadata() {
 }
 .text-right {
   text-align: right;
+}
+.text-center {
+  text-align: center;
 }
 </style>

@@ -28,7 +28,7 @@ const joinInterviewRoom = () => {
   if (roomNumber.value.trim() !== '') {
     // 面试者 ID 是获取当前的localStorage中的 intervieweeId
     // 面试房间号是输入的房间号
-    // const intervieweeId = localStorage.getItem('intervieweeId')
+    const intervieweeId = localStorage.getItem('intervieweeId')
     const interviewId = roomNumber.value
     
     // 重定向到包含面试者 ID 和面试 ID 的面试界面
