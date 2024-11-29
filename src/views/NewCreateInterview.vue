@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, h } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import { z } from 'zod'
@@ -12,6 +12,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  ComboboxAnchor,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxGroup,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxItemIndicator,
+  ComboboxLabel,
+  ComboboxRoot,
+  ComboboxTrigger,
+  ComboboxViewport,
+  TagsInputInput,
+  TagsInputItem,
+  TagsInputItemDelete,
+  TagsInputItemText,
+  TagsInputRoot
+} from 'radix-vue'
+import { Icon } from '@iconify/vue'
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'
 import {
   FormControl,
@@ -31,6 +50,7 @@ import {
   today,
 } from '@internationalized/date'
 import { Calendar } from '@/components/ui/calendar'
+import router from '@/router'
 
 const df = new DateFormatter('zh-CN', {
   dateStyle: 'long',
@@ -39,24 +59,22 @@ const df = new DateFormatter('zh-CN', {
 const formSchema = toTypedSchema(
   z.object({
     interviewType: z.string().refine(v => v, { message: '请选择面试形式' }),
-    interviewDate: z.string().refine(v => v, { message: '请选择面试日志' }),
-    // location: z.string().min(1, '请输入面试地点'),
+    interviewDate: z.string().refine(v => v, { message: '请选择面试日期' }),
     candidates: z.array(z.string()).min(1, '请选择至少一名面试者'),
   })
 )
 
-
 const interviewTypes = [
   {
-    value: 'structured',
+    value: '结构化面试',
     label: '结构化面试',
   },
   {
-    value: 'structured-group',
+    value: '结构化小组',
     label: '结构化小组',
   },
   {
-    value: 'leaderless',
+    value: '无领导小组讨论',
     label: '无领导小组讨论',
   },
 ]
@@ -79,21 +97,19 @@ const interviewees = ref([
   },
 ])
 
-const candidates = ref([
-  { id: '1', name: '张三', avatar: '/avatars/1.png' },
-  { id: '2', name: '李四', avatar: '/avatars/2.png' },
-  { id: '3', name: '王五', avatar: '/avatars/3.png' },
-  { id: '4', name: '赵六', avatar: '/avatars/4.png' },
-  { id: '5', name: '孙七', avatar: '/avatars/5.png' },
-])
-
 const { handleSubmit, setFieldValue, values } = useForm({
   validationSchema: formSchema,
   initialValues: {
     interviewType: '',
     interviewDate: '',
-    // location: '',
     candidates: [],
+  },
+})
+
+const selectedInterviewee = computed({
+  get: () => values.candidates,
+  set: (val) => {
+    setFieldValue('candidates', val)
   },
 })
 
@@ -104,7 +120,6 @@ const value = computed({
   set: (val) => val,
 })
 
-// 面试类型的更新属性
 const selectedInterviewType = computed({
   get: () => values.interviewType,
   set: (val) => {
@@ -112,26 +127,31 @@ const selectedInterviewType = computed({
   },
 })
 
+const searchTerm = ref('')
+
+watch(selectedInterviewee, () => {
+  searchTerm.value = ''
+}, { deep: true })
+
 const onSubmit = handleSubmit((values) => {
+  // 生成一个新的房间号（可以使用随机数或其他逻辑）
+  const newRoomNumber = Math.random().toString(36).substring(2, 8)
+  const interviewDate = df.format(new Date(value.value.year, value.value.month - 1, value.value.day))
+  const candidates = values.candidates.join(', ')
+  const description = `${values.interviewType}面试已创建成功，房间号为：${newRoomNumber}，时间：${interviewDate}，面试者：${candidates}`
+  
   toast({
     title: '创建成功',
-    description: '面试已成功创建，面试号为 #123456，将发送至面试者邮箱！',
+    description,
   })
+  // 等待 2 秒后重定向
+  setTimeout(() => {
+    // 假设面试官 ID 是从 localStorage 获取
+    const interviewerId = localStorage.getItem('interviewerId')
+    // 重定向到包含面试官 ID 和新房间号的面试界面
+    router.push(`/interview?interviewId=${newRoomNumber}&interviewer=${interviewerId}`)
+    }, 2000)
 })
-
-// In script section, update the toggleCandidate method:
-const toggleCandidate = (candidateId) => {
-  const currentCandidates = [...values.candidates]
-  const index = currentCandidates.indexOf(candidateId)
-
-  if (index > -1) {
-    currentCandidates.splice(index, 1)
-  } else {
-    currentCandidates.push(candidateId)
-  }
-
-  setFieldValue('candidates', currentCandidates)
-}
 </script>
 
 <template>
@@ -139,25 +159,43 @@ const toggleCandidate = (candidateId) => {
     <div class="flex w-full h-full p-4 gap-4">
       <Carousel class="w-[70%] scale-90">
         <CarouselContent>
-          <CarouselItem v-for="(_, index) in 5" :key="index">
+          <CarouselItem v-for="interviewee in interviewees" :key="interviewee.id">
             <div class="p-1 h-[100vh]">
               <Card class="h-full">
-                <CardContent class="flex items-center justify-center h-full p-4">
-                  <span class="text-4xl font-semibold">{{ index + 1 }}</span>
+                <CardHeader>
+                  <CardTitle>{{ interviewee.name }}</CardTitle>
+                </CardHeader>
+                <CardContent class="flex flex-col items-center justify-center h-full p-4">
+                  <img
+                    class="w-24 h-24 rounded-full"
+                    :src="`https://avatars.dicebear.com/api/avataaars/${interviewee.name}.svg`"
+                    :alt="interviewee.name"
+                  />
+                  <p class="text-lg">{{ interviewee.name }}</p>
+                  <p class="text-lg">{{ interviewee.email }}</p>
+                  <p class="text-md mt-4">简历内容...</p>
+                  <!-- 在这里添加更多简历内容 -->
                 </CardContent>
               </Card>
             </div>
           </CarouselItem>
         </CarouselContent>
-        <CarouselPrevious />
-        <CarouselNext />
+        <CarouselPrevious>
+          <button type="button" class="carousel-control-prev">
+            <Icon icon="radix-icons:chevron-left" />
+          </button>
+        </CarouselPrevious>
+        <CarouselNext>
+          <button type="button" class="carousel-control-next">
+            <Icon icon="radix-icons:chevron-right" />
+          </button>
+        </CarouselNext>
       </Carousel>
       <Card class="flex flex-col max-h-screen w-[30%]">
         <CardHeader>
           <CardTitle>创建面试房间</CardTitle>
         </CardHeader>
         <CardContent class="space-y-6 flex-grow">
-          <!-- 预选面试者确定、发起面试界面 -->
           <!-- 面试类型 -->
           <FormField name="interviewType">
             <FormItem>
@@ -180,7 +218,6 @@ const toggleCandidate = (candidateId) => {
             </FormItem>
           </FormField>
           <!-- 面试日期 -->
-          <!-- 日历组件有bug、需要修复 -->
           <FormField name="interviewDate">
             <FormItem>
               <FormLabel>面试日期：</FormLabel>
@@ -211,23 +248,77 @@ const toggleCandidate = (candidateId) => {
             </FormItem>
           </FormField>
           <!-- 面试者选择 -->
-          <FormField name="interviewee">
+          <FormField name="candidates">
             <FormItem>
               <FormLabel class="font-bold">面试者</FormLabel>
               <FormControl>
-                <Select v-model="selectedInterviewType">
-                  <SelectTrigger>
-                    <SelectValue placeholder="选择面试者" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem v-for="interviewee in interviewees" :key="interviewee.id" :value="interviewee.id">
-                      <div>
-                        <div>{{ interviewee.name }}</div>
-                        <div class="text-sm text-gray-500">{{ interviewee.email }}</div>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                <ComboboxRoot
+                  v-model="selectedInterviewee"
+                  v-model:search-term="searchTerm"
+                  multiple
+                  class="my-4 mx-auto relative"
+                >
+                  <ComboboxAnchor class="w-[400px] inline-flex items-center justify-between rounded-lg p-2 text-[13px] leading-none gap-[5px] bg-white text-grass11 shadow-[0_2px_10px] shadow-black/10 hover:bg-mauve3 focus:shadow-[0_0_0_2px] focus:shadow-black data-[placeholder]:text-grass9 outline-none">
+                    <TagsInputRoot
+                      v-slot="{ modelValue: tags }"
+                      :model-value="selectedInterviewee"
+                      delimiter=""
+                      class="flex gap-2 items-center rounded-lg flex-wrap"
+                    >
+                      <TagsInputItem
+                        v-for="item in tags"
+                        :key="item"
+                        :value="item"
+                        class="flex items-center justify-center gap-2 text-black bg-gray-200 aria-[current=true]:bg-gray-300 rounded px-2 py-1"
+                      >
+                        <TagsInputItemText class="text-sm">
+                          {{ item }}
+                        </TagsInputItemText>
+                        <TagsInputItemDelete>
+                          <Icon icon="lucide:x" />
+                        </TagsInputItemDelete>
+                      </TagsInputItem>
+
+                      <ComboboxInput as-child>
+                        <TagsInputInput
+                          placeholder="选择面试者"
+                          class="focus:outline-none flex-1 rounded !bg-transparent placeholder:text-mauve10 px-1"
+                          @keydown.enter.prevent
+                        />
+                      </ComboboxInput>
+                    </TagsInputRoot>
+
+                    <ComboboxTrigger>
+                      <Icon
+                        icon="radix-icons:chevron-down"
+                        class="h-4 w-4 text-grass11"
+                      />
+                    </ComboboxTrigger>
+                  </ComboboxAnchor>
+                  <ComboboxContent class="absolute z-10 w-full mt-2 bg-white overflow-hidden rounded shadow-[0px_10px_38px_-10px_rgba(22,_23,_24,_0.35),_0px_10px_20px_-15px_rgba(22,_23,_24,_0.2)] will-change-[opacity,transform] data-[side=top]:animate-slideDownAndFade data-[side=right]:animate-slideLeftAndFade data-[side=bottom]:animate-slideUpAndFade data-[side=left]:animate-slideRightAndFade">
+                    <ComboboxViewport class="p-[5px]">
+                      <ComboboxEmpty class="text-gray-400 text-xs font-medium text-center py-2" />
+
+                      <ComboboxGroup>
+                        <ComboboxItem
+                          v-for="(interviewee, index) in interviewees"
+                          :key="index"
+                          class="text-[13px] leading-none text-grass11 rounded-[3px] flex items-center h-[25px] pr-[35px] pl-[25px] relative select-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:outline-none data-[highlighted]:bg-grass8 data-[highlighted]:text-grass1"
+                          :value="interviewee.name"
+                        >
+                          <ComboboxItemIndicator
+                            class="absolute left-0 w-[25px] inline-flex items-center justify-center"
+                          >
+                            <Icon icon="radix-icons:check" />
+                          </ComboboxItemIndicator>
+                          <span>
+                            {{ interviewee.name }}
+                          </span>
+                        </ComboboxItem>
+                      </ComboboxGroup>
+                    </ComboboxViewport>
+                  </ComboboxContent>
+                </ComboboxRoot>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -240,8 +331,6 @@ const toggleCandidate = (candidateId) => {
     </div>
   </form>
 </template>
-
-
 
 <style scoped>
 .calendar-background {

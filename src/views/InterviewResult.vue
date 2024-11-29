@@ -134,13 +134,7 @@ onMounted(() => {
 
         <!-- 面试者信息 -->
         <FormField v-slot="{ field }" name="intervieweeId">
-          <FormItem>
-            <FormLabel>面试者ID</FormLabel>
-            <FormControl>
-              <Input v-bind="field" placeholder="请输入面试者ID" />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
+          
         </FormField>
 
         <!-- 评分维度 -->
@@ -220,7 +214,7 @@ onMounted(() => {
               <Textarea 
                 v-bind="field" 
                 placeholder="请详细描述面试者的表现..."
-                class="min-h-[100px]"
+                class="w-full"
               />
             </FormControl>
             <FormMessage />

@@ -18,19 +18,15 @@ const router = useRouter()
 
 // 处理创建面试房间的函数
 const createInterviewRoom = () => {
-  // 生成一个新的房间号（可以使用随机数或其他逻辑）
-  const newRoomNumber = Math.random().toString(36).substring(2, 8)
   // 假设面试官 ID 是从 localStorage 获取
   const interviewerId = localStorage.getItem('interviewerId')
-  
-  // 重定向到包含面试官 ID 和新房间号的面试界面
-  router.push(`/interview?interviewId=${newRoomNumber}&interviewer=${interviewerId}`)
+  // 重定向到创建房间的界面
+  router.push(`/create?&interviewer=${interviewerId}`)
 }
 
 // 处理加入面试房间的函数
 const joinInterviewRoom = () => {
   if (roomNumber.value.trim() !== '') {
-    // 假设面试官 ID 是从 localStorage 获取
     const interviewerId = localStorage.getItem('interviewerId')
     const interviewId = roomNumber.value
     
