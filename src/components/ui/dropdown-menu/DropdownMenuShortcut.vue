@@ -1,15 +1,13 @@
 <script setup>
 import { cn } from '@/lib/utils';
-import { badgeVariants } from '.';
 
 const props = defineProps({
-  variant: { type: null, required: false },
   class: { type: null, required: false },
 });
 </script>
 
 <template>
-  <div :class="cn(badgeVariants({ variant }), props.class)">
+  <span :class="cn('ml-auto text-xs tracking-widest opacity-60', props.class)">
     <slot />
-  </div>
+  </span>
 </template>

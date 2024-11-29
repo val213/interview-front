@@ -32,9 +32,14 @@ const form = useForm({
 
 const onSubmit = form.handleSubmit((values) => {
   if (values.accountType === 'interviewer') {
-    router.push('/interviewer')
+    localStorage.setItem('interviewerId', values.email)
+    localStorage.setItem('role', 'interviewer')
+    router.push('/interviewer?interviewerId=' + values.email)
   } else if (values.accountType === 'interviewee') {
-    router.push('/interviewee')
+    localStorage.setItem('intervieweeId', values.email)
+    localStorage.setItem('role', 'interviewee')
+    // 重定向到特定的面试者页面
+    router.push('/interviewee?intervieweeId=' + values.email)
   }
 })
 </script>

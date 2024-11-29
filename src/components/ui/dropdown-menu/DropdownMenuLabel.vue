@@ -1,12 +1,13 @@
 <script setup>
 import { cn } from '@/lib/utils';
-import { DrawerDescription } from 'vaul-vue';
+import { DropdownMenuLabel, useForwardProps } from 'radix-vue';
 import { computed } from 'vue';
 
 const props = defineProps({
   asChild: { type: Boolean, required: false },
   as: { type: null, required: false },
   class: { type: null, required: false },
+  inset: { type: Boolean, required: false },
 });
 
 const delegatedProps = computed(() => {
@@ -14,13 +15,17 @@ const delegatedProps = computed(() => {
 
   return delegated;
 });
+
+const forwardedProps = useForwardProps(delegatedProps);
 </script>
 
 <template>
-  <DrawerDescription
-    v-bind="delegatedProps"
-    :class="cn('tailwind.config.jstext-sm tailwind.config.jstext-muted-foreground', props.class)"
+  <DropdownMenuLabel
+    v-bind="forwardedProps"
+    :class="
+      cn('px-2 py-1.5 text-sm font-semibold', inset && 'pl-8', props.class)
+    "
   >
     <slot />
-  </DrawerDescription>
+  </DropdownMenuLabel>
 </template>

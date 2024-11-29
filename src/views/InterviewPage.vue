@@ -23,14 +23,20 @@ const isCameraOn = ref(false)
 
 // 示例聊天消息
 const messages = ref([
-  { sender: '系统消息', timestamp: 1633028400000, text: '面试即将开始。' },
-  { sender: '面试官', timestamp: 1633024800000, text: 'Hello!' },
-  { sender: '张三', timestamp: 1633032000000, text: 'Hi there!' },
+  { sender: '系统消息', timestamp: 1833028400000, text: '面试即将开始。' },
+  { sender: '面试官', timestamp: 1833024800000, text: 'Hello!' },
+  { sender: '面试者', timestamp: 1833032000000, text: 'Hi there!' },
 ])
+const getVariant = (sender: string) => {
+  if (sender === '面试官') return 'outline'
+  if (sender === '系统消息') return 'secondary'
+  return 'default'
+}
 const newMessage = ref('')
-// 初始化房间号
+// 初始化房间号，从url中的interviewId=tk3xjf 获得
 onMounted(() => {
-  usingroomnumber.value = localStorage.getItem('usingroomnumber') || ''
+  usingroomnumber.value = getQueryParam('interviewId') || ''
+  fetchInterviewMetadata()
 })
 
 // 开始面试函数
@@ -140,7 +146,7 @@ const redirectToInterviewScore = (interviewId: string, interviewee: string) => {
 const sendMessage = () => {
   if (newMessage.value.trim() !== '') {
     messages.value.push({
-      sender: '张三', // Replace with the actual sender
+      sender: localStorage.getItem('role') === 'interviewer' ? '面试官' : '面试者',
       timestamp: Date.now(),
       text: newMessage.value.trim()
     })
@@ -255,7 +261,7 @@ function fetchInterviewMetadata() {
                           <div class="text-xs text-gray-500">
                             {{ message.sender }} - {{ new Date(message.timestamp).toLocaleString() }}
                           </div>
-                            <Badge :variant="message.sender === '面试官' ? 'outline' : message.sender === '系统消息' ? 'secondary' : 'default'">
+                            <Badge :variant = getVariant(message.sender)>
                               {{ message.text }}
                             </Badge>
                           </div>

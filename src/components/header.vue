@@ -7,7 +7,7 @@
 
           <el-dropdown>
     <span class="el-dropdown-link">
-      {{ username }}<i class="el-icon-arrow-down el-icon--right"></i>
+      {{ username }}<i eclass="el-icon-arrow-down el-icon--right"></i>
     </span>
     <el-dropdown-menu slot="dropdown" >
       <el-dropdown-item @click.native="changeToUserData">个人资料</el-dropdown-item>

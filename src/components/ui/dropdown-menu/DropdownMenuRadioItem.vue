@@ -1,15 +1,20 @@
 <script setup>
 import { cn } from '@/lib/utils';
-import { MenubarItem, useForwardPropsEmits } from 'radix-vue';
+import { Circle } from 'lucide-vue-next';
+import {
+  DropdownMenuItemIndicator,
+  DropdownMenuRadioItem,
+  useForwardPropsEmits,
+} from 'radix-vue';
 import { computed } from 'vue';
 
 const props = defineProps({
+  value: { type: String, required: true },
   disabled: { type: Boolean, required: false },
   textValue: { type: String, required: false },
   asChild: { type: Boolean, required: false },
   as: { type: null, required: false },
   class: { type: null, required: false },
-  inset: { type: Boolean, required: false },
 });
 
 const emits = defineEmits(['select']);
@@ -24,16 +29,20 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits);
 </script>
 
 <template>
-  <MenubarItem
+  <DropdownMenuRadioItem
     v-bind="forwarded"
     :class="
       cn(
-        'tailwind.config.jsrelative tailwind.config.jsflex tailwind.config.jscursor-default tailwind.config.jsselect-none tailwind.config.jsitems-center tailwind.config.jsrounded-sm tailwind.config.jspx-2 tailwind.config.jspy-1.5 tailwind.config.jstext-sm tailwind.config.jsoutline-none focus:tailwind.config.jsbg-accent focus:tailwind.config.jstext-accent-foreground data-[disabled]:tailwind.config.jspointer-events-none data-[disabled]:tailwind.config.jsopacity-50',
-        inset && 'tailwind.config.jspl-8',
+        'relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
         props.class,
       )
     "
   >
+    <span class="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+      <DropdownMenuItemIndicator>
+        <Circle class="h-2 w-2 fill-current" />
+      </DropdownMenuItemIndicator>
+    </span>
     <slot />
-  </MenubarItem>
+  </DropdownMenuRadioItem>
 </template>
