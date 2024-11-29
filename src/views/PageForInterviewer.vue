@@ -44,7 +44,8 @@ const joinInterviewRoom = () => {
 </script>
 
 <template>
-  <Card class="w-[100px] space-y-1" style="width: 350px; height: 250px;">
+<div class="h-screen w-full flex items-center justify-center">
+  <Card class="w-[100px] space-y-1 scale-125" style="width: 350px; height: 250px;">
     <CardHeader>
       <CardTitle class="text-center">你好！面试官</CardTitle>
       <!-- <CardDescription>请选择</CardDescription> -->
@@ -61,31 +62,5 @@ const joinInterviewRoom = () => {
       <Button @click="joinInterviewRoom" class="w-full">加入房间</Button>
     </CardFooter>
   </Card>
+</div>
 </template>
-
-<style scoped>
-.flex {
-  display: flex;
-}
-.justify-between {
-  justify-content: space-between;
-}
-.flex-col {
-  flex-direction: column;
-}
-.items-center {
-  align-items: center;
-}
-.text-center {
-  text-align: center;
-}
-.w-full {
-  width: 100%;
-}
-.space-y-1 > * + * {
-  margin-top: 1rem; /* 添加垂直间距 */
-}
-.space-y-2 > * + * {
-  margin-top: 1.5rem; /* 添加垂直间距 */
-}
-</style>

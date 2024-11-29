@@ -4,17 +4,16 @@ import { RouterView, useRouter } from 'vue-router'
 import Toaster from '@/components/ui/toast/Toaster.vue'
 const isAuthenticated = ref(false)
 const router = useRouter()
+import { Card, CardContent } from '@/components/ui/card'
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'
 
 </script>
 
 <template>
-  <div class="flex justify-center items-center min-h-screen">
+  <div class="w-screen h-screen">
     <Toaster />
-    <!-- <header>
-      <h1>面试子系统</h1>
-    </header> -->
     <main>
-      <RouterView />
+      <RouterView class="w-full h-full"></RouterView>
     </main>
   </div>
 </template>

@@ -21,7 +21,7 @@ const forwardedProps = useForwardProps(delegatedProps);
 <template>
   <CalendarHeader
     :class="
-      cn('tailwind.config.jsrelative tailwind.config.jsflex tailwind.config.jsw-full tailwind.config.jsitems-center tailwind.config.jsjustify-between tailwind.config.jspt-1', props.class)
+      cn('relative flex w-full items-center justify-between pt-1', props.class)
     "
     v-bind="forwardedProps"
   >

@@ -15,8 +15,8 @@ const { orientation } = useCarousel();
     aria-roledescription="slide"
     :class="
       cn(
-        'tailwind.config.jsmin-w-0 tailwind.config.jsshrink-0 tailwind.config.jsgrow-0 tailwind.config.jsbasis-full',
-        orientation === 'horizontal' ? 'tailwind.config.jspl-4' : 'tailwind.config.jspt-4',
+        'min-w-0 shrink-0 grow-0 basis-full',
+        orientation === 'horizontal' ? 'pl-4' : 'pt-4',
         props.class,
       )
     "

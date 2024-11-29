@@ -51,7 +51,7 @@ function onKeyDown(event) {
 
 <template>
   <div
-    :class="cn('tailwind.config.jsrelative', props.class)"
+    :class="cn('relative', props.class)"
     role="region"
     aria-roledescription="carousel"
     tabindex="0"

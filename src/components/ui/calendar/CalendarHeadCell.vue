@@ -22,7 +22,7 @@ const forwardedProps = useForwardProps(delegatedProps);
   <CalendarHeadCell
     :class="
       cn(
-        'tailwind.config.jsw-9 tailwind.config.jsrounded-md tailwind.config.jstext-[0.8rem] tailwind.config.jsfont-normal tailwind.config.jstext-muted-foreground',
+        'w-9 rounded-md text-[0.8rem] font-normal text-muted-foreground',
         props.class,
       )
     "

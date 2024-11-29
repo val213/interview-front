@@ -23,7 +23,7 @@ const forwardedProps = useForwardProps(delegatedProps);
   <CalendarCell
     :class="
       cn(
-        'tailwind.config.jsrelative tailwind.config.jsh-9 tailwind.config.jsw-9 tailwind.config.jsp-0 tailwind.config.jstext-center tailwind.config.jstext-sm focus-within:tailwind.config.jsrelative focus-within:tailwind.config.jsz-20 [&:has([data-selected])]:tailwind.config.jsrounded-md [&:has([data-selected])]:tailwind.config.jsbg-accent [&:has([data-selected][data-outside-view])]:tailwind.config.jsbg-accent/50',
+        'relative h-9 w-9 p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([data-selected])]:rounded-md [&:has([data-selected])]:bg-accent [&:has([data-selected][data-outside-view])]:bg-accent/50',
         props.class,
       )
     "

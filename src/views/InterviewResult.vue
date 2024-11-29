@@ -102,9 +102,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <form @submit.prevent="form.handleSubmit(onSubmit)" class="w-full max-w-2xl mx-auto space-y-8">
+  <div class="flex w-full min-h-screen bg-gray-50">
+    <form @submit.prevent="form.handleSubmit(onSubmit)" class="w-full max-w-3xl mx-auto my-4">
     <Card class="p-6">
-      <CardHeader>
+      <CardHeader class="space-y-1 pb-4">
         <CardTitle>面试评价表</CardTitle>
         <CardDescription>请对本次面试进行综合评价</CardDescription>
       </CardHeader>
@@ -121,17 +122,6 @@ onMounted(() => {
             <FormMessage />
           </FormItem>
         </FormField>
-
-        <!-- <FormField v-slot="{ field }" name="interviewDate">
-          <FormItem>
-            <FormLabel>面试日期：</FormLabel>
-            <FormControl>
-              <input  v-model="interviewMetadata.interviewDate" readonly />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        </FormField> -->
-
         <FormField v-slot="{ field }" name="interviewer">
           <FormItem>
             <FormLabel>面试官：</FormLabel>
@@ -243,29 +233,5 @@ onMounted(() => {
       </CardFooter>
     </Card>
   </form>
+  </div>
 </template>
-
-<style scoped>
-.w-full {
-  width: 100%;
-}
-.max-w-2xl {
-  max-width: 42rem;
-}
-.mx-auto {
-  margin-left: auto;
-  margin-right: auto;
-}
-.space-y-8 > * + * {
-  margin-top: 2rem;
-}
-.grid {
-  display: grid;
-}
-.grid-cols-2 {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-.gap-6 {
-  gap: 1.5rem;
-}
-</style>
