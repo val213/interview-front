@@ -14,12 +14,12 @@ const { carouselRef, orientation } = useCarousel();
 </script>
 
 <template>
-  <div ref="carouselRef" class="tailwind.config.jsoverflow-hidden">
+  <div ref="carouselRef" class="overflow-hidden">
     <div
       :class="
         cn(
-          'tailwind.config.jsflex',
-          orientation === 'horizontal' ? 'tailwind.config.js-ml-4' : 'tailwind.config.js-mt-4 tailwind.config.jsflex-col',
+          'flex',
+          orientation === 'horizontal' ? '-ml-4' : '-mt-4 flex-col',
           props.class,
         )
       "

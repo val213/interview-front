@@ -21,7 +21,7 @@ const forwardedProps = useForwardProps(delegatedProps);
 <template>
   <CalendarHeading
     v-slot="{ headingValue }"
-    :class="cn('tailwind.config.jstext-sm tailwind.config.jsfont-medium', props.class)"
+    :class="cn('text-sm font-medium', props.class)"
     v-bind="forwardedProps"
   >
     <slot :heading-value>

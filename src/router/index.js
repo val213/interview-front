@@ -4,6 +4,7 @@ import InterviewPage from '../views/InterviewPage.vue'
 import PageForInterviewee from '@/views/PageForInterviewee.vue'
 import PageForInterviewer from '@/views/PageForInterviewer.vue'
 import CreateInterviewPage from '../views/CreateInterview.vue'
+import NewCreateInterviewPage from '@/views/NewCreateInterview.vue'
 import InterviewResultPage from '../views/InterviewResult.vue'
 import ScorePage from '../views/ScorePage.vue'
 
@@ -33,7 +34,7 @@ const routes = [
   { 
     path: '/create', 
     name: 'create',
-    component: CreateInterviewPage,
+    component: NewCreateInterviewPage,
     
   },
   { 

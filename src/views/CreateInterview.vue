@@ -13,7 +13,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Calendar } from '@/components/ui/calendar'
-import { toast } from '@/components/ui/toast'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   FormControl,
@@ -123,8 +122,9 @@ const toggleCandidate = (candidateId: string) => {
 </script>
 
 <template>
+
   <form @submit="onSubmit">
-    <div class="container mx-auto py-8">
+    <div class="w-full mx-auto py-8">
       <Card class="max-w-4xl mx-auto">
         <CardHeader>
           <CardTitle>创建面试</CardTitle>
@@ -155,7 +155,6 @@ const toggleCandidate = (candidateId: string) => {
             <FormMessage />
           </FormItem>
         </FormField>
-
           <!-- 面试日期 -->
           <FormField name="interviewDate">
             <FormItem>
@@ -189,18 +188,6 @@ const toggleCandidate = (candidateId: string) => {
               <FormMessage />
             </FormItem>
           </FormField>
-
-          <!-- 面试地点 -->
-          <!-- <FormField name="location">
-            <FormItem>
-              <FormLabel>面试地点</FormLabel>
-              <FormControl>
-                <Input v-model="values.location" placeholder="请输入面试地点" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          </FormField> -->
-
           <!-- 选择面试者 -->
         <FormField name="candidates">
           <FormItem>
@@ -252,9 +239,9 @@ const toggleCandidate = (candidateId: string) => {
         </FormField>
         <!-- Add this after the Carousel component -->
         <div class="mt-4 space-y-2">
-        <div class="text-sm text-muted-foreground">
-            已选择 {{ values.candidates.length }} 名面试者
-        </div>
+          <div class="text-sm text-muted-foreground">
+              已选择 {{ values.candidates.length }} 名面试者
+          </div>
             <div v-if="values.candidates.length > 0" class="flex flex-wrap gap-2">
                 <div 
                 v-for="candidateId in values.candidates" 
@@ -274,11 +261,3 @@ const toggleCandidate = (candidateId: string) => {
 
   </form>
 </template>
-
-<style scoped>
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1rem;
-}
-</style>

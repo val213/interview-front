@@ -26,16 +26,16 @@ const forwardedProps = useForwardProps(delegatedProps);
     :class="
       cn(
         buttonVariants({ variant: 'ghost' }),
-        'tailwind.config.jsh-9 tailwind.config.jsw-9 tailwind.config.jsp-0 tailwind.config.jsfont-normal',
-        '[&[data-today]:not([data-selected])]:tailwind.config.jsbg-accent [&[data-today]:not([data-selected])]:tailwind.config.jstext-accent-foreground',
+        'h-9 w-9 p-0 font-normal',
+        '[&[data-today]:not([data-selected])]:bg-accent [&[data-today]:not([data-selected])]:text-accent-foreground',
         // Selected
-        'data-[selected]:tailwind.config.jsbg-primary data-[selected]:tailwind.config.jstext-primary-foreground data-[selected]:tailwind.config.jsopacity-100 data-[selected]:hover:tailwind.config.jsbg-primary data-[selected]:hover:tailwind.config.jstext-primary-foreground data-[selected]:focus:tailwind.config.jsbg-primary data-[selected]:focus:tailwind.config.jstext-primary-foreground',
+        'data-[selected]:bg-primary data-[selected]:text-primary-foreground data-[selected]:opacity-100 data-[selected]:hover:bg-primary data-[selected]:hover:text-primary-foreground data-[selected]:focus:bg-primary data-[selected]:focus:text-primary-foreground',
         // Disabled
-        'data-[disabled]:tailwind.config.jstext-muted-foreground data-[disabled]:tailwind.config.jsopacity-50',
+        'data-[disabled]:text-muted-foreground data-[disabled]:opacity-50',
         // Unavailable
-        'data-[unavailable]:tailwind.config.jstext-destructive-foreground data-[unavailable]:tailwind.config.jsline-through',
+        'data-[unavailable]:text-destructive-foreground data-[unavailable]:line-through',
         // Outside months
-        'data-[outside-view]:tailwind.config.jstext-muted-foreground data-[outside-view]:tailwind.config.jsopacity-50 [&[data-outside-view][data-selected]]:tailwind.config.jsbg-accent/50 [&[data-outside-view][data-selected]]:tailwind.config.jstext-muted-foreground [&[data-outside-view][data-selected]]:tailwind.config.jsopacity-30',
+        'data-[outside-view]:text-muted-foreground data-[outside-view]:opacity-50 [&[data-outside-view][data-selected]]:bg-accent/50 [&[data-outside-view][data-selected]]:text-muted-foreground [&[data-outside-view][data-selected]]:opacity-30',
         props.class,
       )
     "

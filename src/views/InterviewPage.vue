@@ -170,6 +170,7 @@ function fetchInterviewMetadata() {
 </script>
 
 <template>
+  <div class="flex w-full h-screen p-4 gap-4">
     <ResizablePanelGroup
       id="handle-demo-group-1"
       direction="horizontal"
@@ -177,7 +178,7 @@ function fetchInterviewMetadata() {
     >
       <!-- Video Panel -->
       <ResizablePanel id="handle-demo-panel-1" :default-size="50">
-          <Card class="flex w-full flex-col border-2">
+          <Card class="flex w-full h-full flex-col border-2">
             <CardHeader class="space-y-2 pb-4">
               <div class="flex items-center justify-between">
                 <CardTitle class="text-2xl font-bold">视频面试</CardTitle>
@@ -234,14 +235,14 @@ function fetchInterviewMetadata() {
 
       <!-- Chat Panel -->
       <ResizablePanel id="handle-demo-panel-2" :default-size="50">
-          <Card class="flex w-full flex-col border-2">
+          <Card class="flex w-full h-full flex-col border-2">
             <CardHeader class="pb-4">
               <CardTitle>对话记录</CardTitle>
             </CardHeader>
-            <v-container class="h-full">
-              <v-row class="h-full">
-                <v-col class="h-full">
-                  <CardContent class="flex flex-1 flex-col gap-4 h-full">
+            <!-- 消息显示区域 -->
+            <div class="flex flex-col h-full">
+              <div class="space-y-4">
+                <CardContent class="flex flex-1 flex-col gap-4 h-full">
                     <div class="flex-1 overflow-y-auto">
                       <div class="space-y-4 px-2">
                         <div v-for="(message, index) in messages" 
@@ -262,29 +263,28 @@ function fetchInterviewMetadata() {
                       </div>
                     </div>
                   </CardContent>
-                </v-col>
-              </v-row>
-              <v-row>
-                <v-col>
-                  <CardContent class="border-t pt-4">
+              </div>
+            </div>
+            <!-- 消息输入区域 -->
+            <div class="p-4 border-t mt-auto">
+              <CardContent class="border-t pt-4">
                     <form @submit.prevent="sendMessage" class="flex flex-col gap-3">
                       <Textarea
                         v-model="newMessage"
                         placeholder="输入消息，友好交流..."
                         class="min-h-[100px] resize-none rounded-lg border-2 focus:border-primary"
-                      />
+                     />
                       <Button type="submit" class="w-full">
                         发送消息
                         <CornerDownLeft class="ml-2 h-4 w-4" />
-                      </Button>
+                      </Button> 
                     </form>
                   </CardContent>
-                </v-col>
-              </v-row>
-            </v-container>
+            </div>
           </Card>
       </ResizablePanel>
     </ResizablePanelGroup>
+  </div>
 </template>
 <style scoped>
 :deep(.resizable-handle) {

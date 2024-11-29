@@ -40,21 +40,21 @@ const onSubmit = form.handleSubmit((values) => {
 </script>
 
 <template>
-  <Card class="w-[500px] min-h-[500px] p-6">
+<div class="flex justify-center items-center min-h-screen">
+  <Card class="w-[400px] h-[550px] p-4">
     <CardHeader class="space-y-2">
-      <CardTitle class="text-2xl font-bold text-center">
+      <CardTitle class="text-2xl font-bold text-center scale-125">
         登录面试子系统
       </CardTitle>
       <CardDescription class="text-center text-base">
         输入您的账号和密码
       </CardDescription>
     </CardHeader>
-
     <CardContent>
       <form @submit.prevent="onSubmit" class="space-y-6">
         <FormField v-slot="{ field }" name="email">
           <FormItem>
-            <FormLabel>账号</FormLabel>
+            <FormLabel class="font-bold scale-150">账号</FormLabel>
             <FormControl>
               <Input v-bind="field" placeholder="请输入凭证号" />
             </FormControl>
@@ -64,7 +64,7 @@ const onSubmit = form.handleSubmit((values) => {
 
         <FormField v-slot="{ field }" name="password">
           <FormItem>
-            <FormLabel>密码</FormLabel>
+            <FormLabel class="font-bold scale-150">密码</FormLabel>
             <FormControl>
               <Input type="password" v-bind="field" placeholder="请输入密码" />
             </FormControl>
@@ -73,8 +73,8 @@ const onSubmit = form.handleSubmit((values) => {
         </FormField>
 
         <FormField v-slot="{ field }" name="accountType">
-          <FormItem class="space-y-3">
-            <FormLabel>选择身份</FormLabel>
+          <FormItem class="space-y-3 ">
+            <FormLabel class="font-bold scale-150">选择身份</FormLabel>
             <FormControl>
               <RadioGroup v-bind="field" class="flex flex-col space-y-3">
                 <FormItem class="flex items-center space-x-3">
@@ -92,11 +92,11 @@ const onSubmit = form.handleSubmit((values) => {
         </FormField>
       </form>
     </CardContent>
-
     <CardFooter class="pt-6">
       <Button type="submit" class="w-full h-11" @click="onSubmit">
         登录
       </Button>
     </CardFooter>
   </Card>
+</div>
 </template>

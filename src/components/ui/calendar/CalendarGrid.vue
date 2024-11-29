@@ -20,7 +20,7 @@ const forwardedProps = useForwardProps(delegatedProps);
 
 <template>
   <CalendarGrid
-    :class="cn('tailwind.config.jsw-full tailwind.config.jsborder-collapse tailwind.config.jsspace-y-1', props.class)"
+    :class="cn('w-full border-collapse space-y-1', props.class)"
     v-bind="forwardedProps"
   >
     <slot />

@@ -27,14 +27,14 @@ const forwardedProps = useForwardProps(delegatedProps);
     :class="
       cn(
         buttonVariants({ variant: 'outline' }),
-        'tailwind.config.jsh-7 tailwind.config.jsw-7 tailwind.config.jsbg-transparent tailwind.config.jsp-0 tailwind.config.jsopacity-50 hover:tailwind.config.jsopacity-100',
+        'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100',
         props.class,
       )
     "
     v-bind="forwardedProps"
   >
     <slot>
-      <ChevronLeft class="tailwind.config.jsh-4 tailwind.config.jsw-4" />
+      <ChevronLeft class="h-4 w-4" />
     </slot>
   </CalendarPrev>
 </template>
