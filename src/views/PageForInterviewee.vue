@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import {
@@ -15,13 +15,20 @@ import { Input } from '@/components/ui/input'
 // 使用 ref 创建一个响应式变量来存储输入的房间号
 const roomNumber = ref('')
 const router = useRouter()
+// 使用 ref 创建一个响应式变量来存储 interviewerId
+const intervieweeId = ref('')
 
+// 在组件挂载时初始化 interviewerId
+onMounted(() => {
+  // 假设 interviewerId 是从 localStorage 获取
+  intervieweeId.value = localStorage.getItem('intervieweeId') || '未定义'
+})
 // 处理加入面试房间的函数
 const joinInterviewRoom = () => {
   if (roomNumber.value.trim() !== '') {
     // 面试者 ID 是获取当前的localStorage中的 intervieweeId
     // 面试房间号是输入的房间号
-    const intervieweeId = localStorage.getItem('intervieweeId')
+    // const intervieweeId = localStorage.getItem('intervieweeId')
     const interviewId = roomNumber.value
     
     // 重定向到包含面试者 ID 和面试 ID 的面试界面
@@ -37,7 +44,7 @@ const joinInterviewRoom = () => {
 <div class="h-screen w-full flex items-center justify-center">
   <Card class="w-[400px] h-[200px] space-y-1 scale-125">
     <CardHeader>
-      <CardTitle class="text-center">你好！面试者</CardTitle>
+      <CardTitle class="text-center">你好！面试者 {{intervieweeId}}</CardTitle>
       <!-- <CardDescription>请选择</CardDescription> -->
     </CardHeader>
     <form @submit.prevent="joinInterviewRoom">

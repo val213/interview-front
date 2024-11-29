@@ -1,6 +1,6 @@
 <script setup>
 import { cn } from '@/lib/utils';
-import { DrawerDescription } from 'vaul-vue';
+import { DropdownMenuSeparator } from 'radix-vue';
 import { computed } from 'vue';
 
 const props = defineProps({
@@ -17,10 +17,8 @@ const delegatedProps = computed(() => {
 </script>
 
 <template>
-  <DrawerDescription
+  <DropdownMenuSeparator
     v-bind="delegatedProps"
-    :class="cn('tailwind.config.jstext-sm tailwind.config.jstext-muted-foreground', props.class)"
-  >
-    <slot />
-  </DrawerDescription>
+    :class="cn('-mx-1 my-1 h-px bg-muted', props.class)"
+  />
 </template>

@@ -1,5 +1,5 @@
 <script setup>
-import { TooltipTrigger } from 'radix-vue';
+import { DropdownMenuGroup } from 'radix-vue';
 
 const props = defineProps({
   asChild: { type: Boolean, required: false },
@@ -8,7 +8,7 @@ const props = defineProps({
 </script>
 
 <template>
-  <TooltipTrigger v-bind="props">
+  <DropdownMenuGroup v-bind="props">
     <slot />
-  </TooltipTrigger>
+  </DropdownMenuGroup>
 </template>

@@ -1,5 +1,5 @@
 <script setup>
-import { MenubarSub, useForwardPropsEmits } from 'radix-vue';
+import { DropdownMenuSub, useForwardPropsEmits } from 'radix-vue';
 
 const props = defineProps({
   defaultOpen: { type: Boolean, required: false },
@@ -11,7 +11,7 @@ const forwarded = useForwardPropsEmits(props, emits);
 </script>
 
 <template>
-  <MenubarSub v-bind="forwarded">
+  <DropdownMenuSub v-bind="forwarded">
     <slot />
-  </MenubarSub>
+  </DropdownMenuSub>
 </template>
