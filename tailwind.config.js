@@ -1,5 +1,6 @@
+import tailwindcssAnimate from 'tailwindcss-animate';
 /** @type {import('tailwindcss').Config} */
-module.exports = {
+export default {
   darkMode: ["class"],
   safelist: ["dark"],
   prefix: "",
@@ -20,6 +21,10 @@ module.exports = {
       },
     },
     extend: {
+      backgroundColor: {
+        'calendar-bg': '#ffffff', // 日历组件的默认背景颜色
+        'calendar-bg-dark': '#1a1a1a', // 日历组件在暗黑模式下的背景颜色
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -87,5 +92,5 @@ module.exports = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [tailwindcssAnimate],
 }
