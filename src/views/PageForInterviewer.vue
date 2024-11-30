@@ -27,9 +27,9 @@ onMounted(() => {
 // 处理创建面试房间的函数
 const createInterviewRoom = () => {
   // 假设面试官 ID 是从 localStorage 获取
-  // const interviewerId = localStorage.getItem('interviewerId')
+  const interviewerId = localStorage.getItem('interviewerId')
   // 重定向到创建房间的界面
-  router.push(`/create?&interviewer=${interviewerId}`)
+  router.push(`/create?interviewer=${interviewerId}`)
 }
 
 // 处理加入面试房间的函数

@@ -16,16 +16,18 @@ import CameraIcon from '@/assets/camera.svg'
 
 const router = useRouter()
 const { toast } = useToast()
-const videoRef = ref<HTMLVideoElement | null>(null)
+const localVideoRef = ref<HTMLVideoElement | null>(null)
+const remoteVideoRef = ref<HTMLVideoElement | null>(null)
 const mediaStream = ref<MediaStream | null>(null)
 const usingroomnumber = ref('')
 const isCameraOn = ref(false)
+let peerConnection: RTCPeerConnection | null = null
+let remoteDescriptionSet = false;
+const queuedCandidates = [];
 
 // 示例聊天消息
 const messages = ref([
   { sender: '系统消息', timestamp: 1833028400000, text: '面试即将开始，请双方做好准备！' },
-  { sender: '面试官', timestamp: 1833028400000, text: '你好，请问你的姓名是？' },
-  { sender: '面试者', timestamp: 1833028400000, text: '我叫小明，很高兴认识您！' },
 ])
 const getVariant = (sender: string) => {
   if (sender === '面试官') return 'outline'
@@ -41,11 +43,19 @@ const roleMapping = {
 const userRole = ref(roleMapping[localStorage.getItem('role')] || '未知角色')
 let socket: WebSocket | null = null
 
+const configuration = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+  ],
+};
+
 // 初始化房间号，从url中的interviewId=tk3xjf 获得
 onMounted(() => {
   usingroomnumber.value = getQueryParam('interviewId') || ''
   fetchInterviewMetadata()
   connectWebSocket()
+  createPeerConnection() // Initialize peer connection on mount
 })
 
 onBeforeUnmount(() => {
@@ -55,28 +65,171 @@ onBeforeUnmount(() => {
 })
 
 const connectWebSocket = () => {
-  socket = new WebSocket('ws://localhost:8080/chat')
+  console.log('Connecting to WebSocket...');
+  socket = new WebSocket('ws://localhost:8080/chat');
 
-  socket.onmessage = (event) => {
-    const messageData = JSON.parse(event.data)
-    // 检查消息的发送者是否是当前用户
-    if (messageData.senderName !== userRole.value) {
-      messages.value.push({
-        sender: messageData.senderName,
-        timestamp: new Date(messageData.sendAt).getTime(),
-        text: messageData.content
-      })
+  socket.onopen = () => {
+    console.log('WebSocket connection opened');
+  };
+
+  socket.onmessage = async (event) => {
+    const messageData = JSON.parse(event.data);
+    console.log('WebSocket message received:', messageData);
+
+    if (messageData.type === 'offer') {
+      console.log('Received offer:', messageData);
+      await handleOffer(messageData);
+    } else if (messageData.type === 'answer') {
+      console.log('Received answer:', messageData);
+      await handleAnswer(messageData);
+    } else if (messageData.type === 'candidate') {
+      console.log('Received ICE candidate:', messageData);
+      await handleCandidate(messageData);
+    } else if (messageData.type === 'chat') {
+      console.log('Received chat message:', messageData);
+      if (messageData.senderName !== userRole.value) {
+        messages.value.push({
+          sender: messageData.senderName,
+          timestamp: new Date(messageData.sendAt).getTime(),
+          text: messageData.content,
+        });
+      }
     }
-  }
+  };
 
   socket.onclose = () => {
-    console.log('WebSocket connection closed')
-  }
+    console.log('WebSocket connection closed');
+  };
 
   socket.onerror = (error) => {
-    console.error('WebSocket error:', error)
+    console.error('WebSocket error:', error);
+  };
+};
+
+const createPeerConnection = () => {
+  console.log('Creating RTCPeerConnection...');
+  peerConnection = new RTCPeerConnection({
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      // 可以添加更多的 STUN 服务器
+    ],
+  });
+  
+  peerConnection.onicecandidate = (event) => {
+    if (event.candidate) {
+      console.log('ICE Candidate:', event.candidate);
+      const candidateMessage = {
+        type: 'candidate',
+        candidate: event.candidate,
+      };
+      socket.send(JSON.stringify(candidateMessage));
+    }
+  };
+
+  peerConnection.ontrack = (event) => {
+    console.log('Remote track received:', event.streams[0]);
+    if (remoteVideoRef.value) {
+      remoteVideoRef.value.srcObject = event.streams[0];
+    }
+  };
+  console.log('RTCPeerConnection created.');
+};
+
+const handleOffer = async (message) => {
+  console.log('Handling offer:', message);
+  if (!peerConnection) {
+    createPeerConnection();
   }
-}
+  await peerConnection.setRemoteDescription(
+    new RTCSessionDescription({ type: 'offer', sdp: message.sdp })
+  );
+  remoteDescriptionSet = true;
+  // 添加已缓存的 ICE 候选
+  for (const candidate of queuedCandidates) {
+    await peerConnection.addIceCandidate(candidate);
+  }
+  queuedCandidates.length = 0; // 清空队列
+
+  if (mediaStream.value) {
+    console.log('Adding local tracks to peer connection.');
+    mediaStream.value.getTracks().forEach((track) => {
+      if (!peerConnection.getSenders().find(sender => sender.track === track)) {
+        peerConnection.addTrack(track, mediaStream.value);
+      }
+    });
+  }
+
+  const answer = await peerConnection.createAnswer();
+  await peerConnection.setLocalDescription(answer);
+  console.log('Local description set with answer:', answer);
+
+  const answerMessage = {
+    type: 'answer',
+    sdp: answer.sdp,
+  };
+  socket.send(JSON.stringify(answerMessage));
+  console.log('Answer sent.');
+};
+
+const handleAnswer = async (message) => {
+  console.log('Handling answer:', message);
+  if (!peerConnection) {
+    console.error('PeerConnection is not initialized.');
+    return;
+  }
+  if (peerConnection.signalingState !== 'have-local-offer') {
+    console.error('Cannot set remote answer in state:', peerConnection.signalingState);
+    return;
+  }
+  await peerConnection.setRemoteDescription(
+    new RTCSessionDescription({ type: 'answer', sdp: message.sdp })
+  );
+  console.log('Remote description set with answer.');
+};
+
+const handleCandidate = async (message) => {
+  console.log('Handling ICE candidate:', message.candidate);
+  const candidate = new RTCIceCandidate(message.candidate);
+  if (remoteDescriptionSet) {
+    await peerConnection.addIceCandidate(candidate);
+  } else {
+    queuedCandidates.push(candidate);
+  }
+};
+
+const sendMessage = (message, sender) => {
+  if (message.trim() !== '') {
+    const now = new Date();
+    const formattedDate = now.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).replace(/\//g, '-').replace(',', '');
+
+    const messageData = {
+      type: 'chat',
+      content: message.trim(),
+      sendAt: formattedDate,
+      senderName: sender
+    };
+
+    if (socket) {
+      console.log('Sending message:', messageData);
+      socket.send(JSON.stringify(messageData));
+    }
+
+    messages.value.push({
+      sender: sender,
+      timestamp: Date.now(),
+      text: message.trim()
+    });
+    newMessage.value = ''; // 清空输入区域
+  }
+};
 
 // 开始面试函数
 const startInterview = async () => {
@@ -87,11 +240,15 @@ const startInterview = async () => {
       isCameraOn.value = false
     }
 
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-    const videoElement = videoRef.value
+    if (!peerConnection || peerConnection.signalingState === 'closed') {
+      createPeerConnection();
+    }
+
+    mediaStream.value = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+    const videoElement = localVideoRef.value
 
     if (videoElement) {
-      videoElement.srcObject = stream
+      videoElement.srcObject = mediaStream.value
       videoElement.muted = true
       videoElement.playsInline = true
       await videoElement.play().catch(err => {
@@ -99,7 +256,16 @@ const startInterview = async () => {
       })
     }
 
-    mediaStream.value = stream
+    // Add local tracks to peer connection
+    mediaStream.value.getTracks().forEach((track) => {
+      peerConnection.addTrack(track, mediaStream.value)
+    })
+
+    // Create and send offer
+    const offer = await peerConnection.createOffer()
+    await peerConnection.setLocalDescription(offer)
+    socket.send(JSON.stringify({ type: 'offer', sdp: offer.sdp }))
+
     isCameraOn.value = true
 
     toast({
@@ -124,10 +290,15 @@ const stopInterview = () => {
       mediaStream.value.getTracks().forEach(track => track.stop())
       mediaStream.value = null
     }
-    if (videoRef.value) {
-      videoRef.value.srcObject = null
+    if (localVideoRef.value) {
+      localVideoRef.value.srcObject = null
     }
     isCameraOn.value = false
+
+    if (peerConnection) {
+      peerConnection.close()
+      peerConnection = null
+    }
 
     toast({
       title: "Success",
@@ -159,47 +330,6 @@ const redirectToInterviewResult = (interviewId: string, interviewer: string) => 
   url.searchParams.append('interviewer', interviewer)
 
   window.location.href = url.toString()
-}
-
-const redirectToInterviewScore = (interviewId: string, interviewee: string) => {
-  const baseUrl = 'http://localhost:5173/score?'
-  const url = new URL(baseUrl)
-  url.searchParams.append('interviewId', interviewId)
-  url.searchParams.append('interviewee', interviewee)
-
-  window.location.href = url.toString()
-}
-
-const sendMessage = (message, sender) => {
-  if (message.trim() !== '') {
-    const now = new Date()
-    const formattedDate = now.toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    }).replace(/\//g, '-').replace(',', '')
-
-    const messageData = {
-      content: message.trim(),
-      sendAt: formattedDate, // 当前时间
-      senderName: sender
-    }
-
-    if (socket) {
-      socket.send(JSON.stringify(messageData))
-    }
-
-    messages.value.push({
-      sender: sender,
-      timestamp: Date.now(),
-      text: message.trim()
-    })
-    newMessage.value = '' // 清空输入区域
-  }
 }
 
 function getQueryParam(param: string) {
@@ -247,14 +377,21 @@ const handleSubmit = () => {
             
             <CardContent class="flex flex-1 flex-col gap-6 p-6 h-full">
               <div class="relative flex-1 overflow-hidden rounded-xl bg-slate-100">
-                <video 
-                  v-show="isCameraOn" 
-                  ref="videoRef" 
-                  autoplay 
-                  muted 
-                  playsinline 
-                  class="h-full w-full rounded-xl object-cover transition-opacity duration-200"
-                />
+                <div class="flex h-full">
+                  <video
+                    ref="localVideoRef"
+                    autoplay
+                    muted
+                    playsinline
+                    class="h-full w-1/2 rounded-xl object-cover"
+                  />
+                  <video
+                    ref="remoteVideoRef"
+                    autoplay
+                    playsinline
+                    class="h-full w-1/2 rounded-xl object-cover"
+                  />
+                </div>
                 <div v-show="!isCameraOn" 
                      class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
                   <img :src="CameraIcon" alt="Camera Off" class="h-32 w-32 opacity-40" />
@@ -279,7 +416,6 @@ const handleSubmit = () => {
                   variant="destructive"
                   class="flex-1 font-medium"
                   size="lg"
-                  :disabled="!isCameraOn"
                 >
                   结束面试
                 </Button>

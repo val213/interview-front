@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import Header from '@/components/header.vue'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import axios from 'axios';
 
 // 面试结果数据
 const interviewResult = ref({
@@ -19,7 +20,58 @@ const interviewResult = ref({
   status: 'passed', // 'passed' | 'failed' | 'pending'
   rank: 3, // 排名
   comments: '表现优秀，具备良好的沟通能力和专业素养',
-  hiringDecision: 'accepted' // 'accepted' | 'rejected' | 'pending'
+  hiringDecision: 'accepted', // 'accepted' | 'rejected' | 'pending'
+  interviewee: '张三'
+})
+
+// 获取面试结果的函数
+const fetchInterviewResult = async (interviewId: any) => {
+  axios.defaults.baseURL = 'http://localhost:8080';
+
+  try {
+    const response = await axios.get(`/evaluation/search/5/${interviewId}`, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+      const result = response.data.data.records
+      console.log('面试结果:', result[0])
+      if (Array.isArray(result) && result.length > 0) {
+        const interviewData = result[0];
+        interviewResult.value = {
+          jobTitle: interviewData.position,
+          interviewDate: interviewData.updatedAt,
+          scores: {
+            languageExpression: interviewData.languageExpression,
+            logicalThinking: interviewData.logicalThinking,
+            situationalResponse: interviewData.situationalResponse,
+            professionalKnowledge: interviewData.professionalKnowledge,
+            personalQuality: interviewData.personalQuality,
+            total: interviewData.comprehensiveScore
+          },
+          status: 'passed',
+          rank: 3,
+          comments: interviewData.comments,
+          hiringDecision: interviewData.result,
+          interviewee: interviewData.intervieweeId,
+        }
+      } else {
+        console.error('No interview data found');
+      }
+  } catch (error) {
+    console.error('Failed to fetch interview result:', error)
+  }
+}
+
+// 在组件挂载时获取面试结果
+onMounted(() => {
+  const urlParams = new URLSearchParams(window.location.search)
+  const interviewId = urlParams.get('interviewId')
+  console.log('面试ID:', interviewId)
+  if (interviewId) {
+    fetchInterviewResult(interviewId)
+    console.log('面试结果:', interviewResult.value)
+  }
 })
 </script>
 
@@ -34,6 +86,8 @@ const interviewResult = ref({
             应聘职位：{{ interviewResult.jobTitle }}
             <br/>
             面试日期：{{ interviewResult.interviewDate }}
+            <br/>
+            面试者：{{ interviewResult.interviewee }}
           </CardDescription>
         </CardHeader>
 
@@ -46,8 +100,8 @@ const interviewResult = ref({
             <Badge variant="outline">
               排名: {{ interviewResult.rank }}
             </Badge>
-            <Badge :variant="interviewResult.hiringDecision === 'accepted' ? 'default' : 'destructive'">
-              {{ interviewResult.hiringDecision === 'accepted' ? '录用' : '未录用' }}
+            <Badge :variant="interviewResult.hiringDecision === '录用' ? 'default' : 'destructive'">
+              {{ interviewResult.hiringDecision === '录用' ? '录用' : '未录用' }}
             </Badge>
           </div>
 
