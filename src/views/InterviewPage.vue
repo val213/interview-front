@@ -16,8 +16,8 @@ import CameraIcon from '@/assets/camera.svg'
 
 const router = useRouter()
 const { toast } = useToast()
-const mediaStream = ref<MediaStream | null>(null)
 const usingroomnumber = ref('')
+// 此刻是否有人（自己或者对方）打开了摄像头
 const isCameraOn = ref(false)
 const isRemoteVideoOn = ref(false)
 
@@ -35,26 +35,90 @@ const roleMapping = {
   interviewer: '面试官',
   interviewee: '面试者',
 }
-
+const mediaStream = ref<MediaStream | null>(null)
+// 业务身份
 const userRole = ref(roleMapping[localStorage.getItem('role')] || '未知角色')
-let socket: WebSocket | null = null
+// webrtc 单向身份，默认接收者
+const webrtcRole = ref('receiver')
+// const localVideoRef = ref<HTMLVideoElement | null>(null)
+// const remoteVideoRef = ref<HTMLVideoElement | null>(null)
 
-// 初始化房间号，从url中的interviewId=tk3xjf 获得
+// 初始化房间号，从 url 中获得
 onMounted(() => {
   usingroomnumber.value = getQueryParam('interviewId') || ''
   fetchInterviewMetadata()
+  connectWebSocket()
+  init()
 })
 
-onBeforeUnmount(() => {
-  if (socket) {
-    socket.close()
+const sendMessage = (message, sender) => {
+  if (message.trim() !== '') {
+    const now = new Date()
+    const formattedDate = now.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).replace(/\//g, '-').replace(',', '')
+
+    const messageData = {
+      type: 'chat',
+      content: message.trim(),
+      sendAt: formattedDate,
+      senderName: sender
+    }
+
+    if (websocket) {
+      console.log('Sending ' + messageData.type + ' message:', messageData)
+      websocket.send(JSON.stringify(messageData))
+    }
+
+    messages.value.push({
+      sender: sender,
+      timestamp: Date.now(),
+      text: message.trim()
+    })
+    newMessage.value = '' // 清空输入区域
   }
-})
+}
 
-// 开始面试函数
+const connectWebSocket = () => {
+  console.log('Connecting to WebSocket...');
+  websocket = new WebSocket('ws://localhost:8080/chat');
+  websocket.onopen = () => {
+    console.log('WebSocket connection opened');
+  };
+  websocket.onmessage = async (event) => {
+    const messageData = JSON.parse(event.data);
+    console.log('WebSocket message received:', messageData);
+    if (messageData.type === 'chat') {
+      console.log('Received chat message:', messageData);
+      if (messageData.senderName !== userRole.value) {
+        messages.value.push({
+          sender: messageData.senderName,
+          timestamp: new Date(messageData.sendAt).getTime(),
+          text: messageData.content,
+        });
+      }
+    }
+  };
+  websocket.onclose = () => {
+    console.log('WebSocket connection closed');
+  };
+  websocket.onerror = (error) => {
+    console.error('WebSocket error:', error);
+  };
+};
+
+// （面试者）开始面试函数
 const startInterview = async () => {
   try {
-
+    webrtcRole.value = 'sender'
+    createOffer()
+    isCameraOn.value = true
     toast({
       title: "Success",
       description: "摄像头已开启！",
@@ -73,6 +137,14 @@ const startInterview = async () => {
 // 停止面试函数
 const stopInterview = () => {
   try {
+    if (mediaStream.value) {
+      mediaStream.value.getTracks().forEach(track => track.stop())
+      mediaStream.value = null
+    }
+    // if (localVideoRef.value) {
+    //   localVideoRef.value.srcObject = null
+    // }
+    isCameraOn.value = false
 
     toast({
       title: "Success",
@@ -125,6 +197,104 @@ function fetchInterviewMetadata() {
   }
 }
 
+const handleSubmit = () => {
+  sendMessage(newMessage.value, userRole.value)
+}
+
+
+import { io } from 'socket.io-client';
+
+const pc = new RTCPeerConnection({
+  iceServers: [{ urls: 'stun:stun.voipbuster.com ' }],
+});
+
+let localStream: MediaStream;
+let remoteStream: MediaStream;
+
+
+const offerSdp = ref('');
+const answerSdp = ref('');
+const offerSdp2 = ref('');
+const answerSdp2 = ref('');
+const socket = io('http://localhost:3000');
+let websocket : WebSocket | null = null
+const init = async () => {
+
+  const remoteVideo = document.getElementById('remote') as HTMLVideoElement;
+  socket.on('connect', () => {
+    console.log('client connect!');
+  });
+
+  socket.on('getoffer', (offer) => {
+    offerSdp2.value = offer;
+    isCameraOn.value = true;
+    createAnswer();
+  });
+
+  socket.on('getanswer', (answer) => {
+    answerSdp2.value = answer;
+    addAnswer();
+  });
+
+  pc.ontrack = (event) => {
+    remoteVideo.srcObject = event.streams[0];
+  };
+};
+
+const createOffer = async () => {
+  localStream = await navigator.mediaDevices.getUserMedia({
+    video: true,
+    audio: false,
+  });
+  const localVideo = document.getElementById('local') as HTMLVideoElement;
+  localVideo.srcObject = localStream;
+
+  localStream.getTracks().forEach((track) => {
+    pc.addTrack(track, localStream);
+  });
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+
+  pc.onicecandidate = async (event) => {
+    if (event.candidate) {
+      offerSdp.value = JSON.stringify(pc.localDescription);
+      sendOffer(offerSdp.value);
+    }
+  };
+};
+
+const createAnswer = async () => {
+  const offer = JSON.parse(offerSdp2.value);
+  pc.onicecandidate = async (event) => {
+    if (event.candidate) {
+      answerSdp.value = JSON.stringify(pc.localDescription);
+      sendAnswer(answerSdp.value);
+    }
+  };
+  await pc.setRemoteDescription(offer);
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+};
+
+const addAnswer = async () => {
+  const answer = JSON.parse(answerSdp2.value);
+  if (!pc.currentRemoteDescription) {
+    pc.setRemoteDescription(answer);
+  }
+};
+
+const copyToClipboard = (val: string) => {
+  navigator.clipboard.writeText(val);
+};
+
+const sendOffer = async (offer: string) => {
+  socket.emit('sendoffer', offer);
+};
+
+const sendAnswer = async (answer: string) => {
+  socket.emit('sendanswer', answer);
+};
+
 </script>
 
 <template>
@@ -143,46 +313,45 @@ function fetchInterviewMetadata() {
                 <span class="rounded-full bg-muted px-3 py-1 text-sm">
                   房间号：{{ usingroomnumber }}
                 </span>
+                <span class="rounded-full bg-muted px-3 py-1 text-sm">
+                  角色：{{ userRole }}
+                </span>
               </div>
             </CardHeader>
             
             <CardContent class="flex flex-1 flex-col gap-6 p-6 h-full">
               <div class="relative flex-1 overflow-hidden rounded-xl bg-slate-100">
-                <div class="flex h-full">
-                  <div class="relative h-full w-1/2 bg-gray-300 rounded-xl">
-                  <!-- video1 -->
-                    <video
-                      id="localVideo"
-                      ref="localVideoRef"
-                      muted
-                      playsinline
-                      class="local h-full w-full rounded-xl object-cover"
-                    />
-                    <div v-show="!isCameraOn" 
-                         class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-                         <img :src="CameraIcon" alt="Camera Off" class="h-32 w-32 opacity-40" />
-                      <p class="mt-4 text-sm text-muted-foreground">
-                        暂未接收到本地视频流
-                      </p>
-                    </div>
-                  </div>
-                  <div class="relative h-full w-1/2 bg-gray-300 rounded-xl">
-                    <!-- video2 -->
-                    <video
-                      id="remoteVideo"
-                      ref="remoteVideoRef"
-                      autoplay
-                      playsinline
-                      class="remote h-full w-full rounded-xl object-cover"
-                    />
-                    <div v-show="!isRemoteVideoOn" 
-                         class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-                         <img :src="CameraIcon" alt="Camera Off" class="h-32 w-32 opacity-40" />
-                      <p class="mt-4 text-sm text-muted-foreground">
-                        暂未接收到远程视频流
-                      </p>
-                    </div>
-                  </div>
+                <div v-show="isCameraOn" 
+                    class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+                <video
+                  v-show="isCameraOn && webrtcRole === 'sender'" 
+                  id="local"
+                  autoplay 
+                  muted 
+                  playsinline 
+                  class="w-full h-auto max-h-full object-cover rounded-xl transition-opacity duration-200"
+                />
+                <p v-show="isCameraOn && webrtcRole === 'sender'" class="absolute top-0 left-0 w-full text-center text-sm text-muted-foreground mt-2">
+                  您正在分享摄像头画面
+                </p>
+                <video
+                  v-show="isCameraOn && webrtcRole === 'receiver'" 
+                  id="remote" 
+                  autoplay 
+                  muted 
+                  playsinline 
+                  class="w-full h-auto max-h-full object-cover rounded-xl transition-opacity duration-200"
+                />
+                <p v-show="isCameraOn && webrtcRole === 'receiver'" class="absolute top-0 left-0 w-full text-center text-sm text-muted-foreground mt-2">
+                  您正在接受对方的摄像头画面
+                </p>
+                </div>
+                <div v-show="!isCameraOn" 
+                    class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+                  <img :src="CameraIcon" alt="Camera Off" class="h-32 w-32 opacity-40" />
+                  <p class="mt-4 text-sm text-muted-foreground">
+                    摄像头未开启，请点击"开始面试"按钮
+                  </p>
                 </div>
               </div>
 
