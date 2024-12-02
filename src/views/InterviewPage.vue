@@ -145,11 +145,12 @@ const createPeerConnection = () => {
 
   // 监听远程视频流
   peerConnection.ontrack = (event) => {
-    console.log('Remote track received:', event.streams[0])
+    console.log('remoteVideoRef:', remoteVideoRef.value)
     const remotevideoElement = remoteVideoRef.value
     if (remotevideoElement) {
+      console.log('Remote track received:', event.streams[0])
       remotevideoElement.srcObject = event.streams[0]
-      isRemoteVideoOn.value = true // 设置远程视频状态为开启
+      isRemoteVideoOn.value = true
       remotevideoElement.playsInline = true
       remotevideoElement.play().catch(err => {
         console.error('视频播放错误:', err)
@@ -184,8 +185,6 @@ const handleOffer = async (message) => {
   socket.send(JSON.stringify(answerMessage))
   console.log('Answer sent.')
 
-  // 确保显示远程视频区域
-  isCameraOn.value = true
 }
 
 const handleAnswer = async (message) => {
@@ -270,7 +269,7 @@ const startInterview = async () => {
 
     mediaStream.value = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
     const videoElement = localVideoRef.value
-
+    console.log('localVideoRef:', videoElement)
     if (videoElement) {
       videoElement.srcObject = mediaStream.value
       videoElement.muted = true
@@ -404,25 +403,36 @@ const handleSubmit = () => {
             <CardContent class="flex flex-1 flex-col gap-6 p-6 h-full">
               <div class="relative flex-1 overflow-hidden rounded-xl bg-slate-100">
                 <div class="flex h-full">
-                  <video
-                    ref="localVideoRef"
-                    autoplay
-                    muted
-                    playsinline
-                    class="h-full w-1/2 rounded-xl object-cover"
-                  />
-                  <video
-                    ref="remoteVideoRef"
-                    playsinline
-                    class="h-full w-1/2 rounded-xl object-cover"
-                  />
-                </div>
-                <div v-show="!isCameraOn && !isRemoteVideoOn" 
-                     class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-                  <img :src="CameraIcon" alt="Camera Off" class="h-32 w-32 opacity-40" />
-                  <p class="mt-4 text-sm text-muted-foreground">
-                    摄像头未开启，请点击"开始面试"按钮
-                  </p>
+                  <div class="relative h-full w-1/2 bg-gray-300 rounded-xl">
+                    <video
+                      ref="localVideoRef"
+                      autoplay
+                      muted
+                      playsinline
+                      class="h-full w-full rounded-xl object-cover"
+                    />
+                    <div v-show="!isCameraOn" 
+                         class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+                         <img :src="CameraIcon" alt="Camera Off" class="h-32 w-32 opacity-40" />
+                      <p class="mt-4 text-sm text-muted-foreground">
+                        暂未接收到本地视频流
+                      </p>
+                    </div>
+                  </div>
+                  <div class="relative h-full w-1/2 bg-gray-300 rounded-xl">
+                    <video
+                      ref="remoteVideoRef"
+                      playsinline
+                      class="h-full w-full rounded-xl object-cover"
+                    />
+                    <div v-show="!isRemoteVideoOn" 
+                         class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+                         <img :src="CameraIcon" alt="Camera Off" class="h-32 w-32 opacity-40" />
+                      <p class="mt-4 text-sm text-muted-foreground">
+                        暂未接收到远程视频流
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
