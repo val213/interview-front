@@ -16,15 +16,10 @@ import CameraIcon from '@/assets/camera.svg'
 
 const router = useRouter()
 const { toast } = useToast()
-const localVideoRef = ref<HTMLVideoElement | null>(null)
-const remoteVideoRef = ref<HTMLVideoElement | null>(null)
 const mediaStream = ref<MediaStream | null>(null)
 const usingroomnumber = ref('')
 const isCameraOn = ref(false)
-const isRemoteVideoOn = ref(false) // 新增状态变量
-let peerConnection: RTCPeerConnection | null = null
-let remoteDescriptionSet = false;
-const queuedCandidates = []
+const isRemoteVideoOn = ref(false)
 
 // 示例聊天消息
 const messages = ref([
@@ -48,8 +43,6 @@ let socket: WebSocket | null = null
 onMounted(() => {
   usingroomnumber.value = getQueryParam('interviewId') || ''
   fetchInterviewMetadata()
-  connectWebSocket()
-  createPeerConnection() // Initialize peer connection on mount
 })
 
 onBeforeUnmount(() => {
@@ -58,239 +51,9 @@ onBeforeUnmount(() => {
   }
 })
 
-const connectWebSocket = () => {
-  console.log('Connecting to WebSocket...')
-  socket = new WebSocket('ws://localhost:8080/chat')
-
-  socket.onopen = () => {
-    console.log('WebSocket connection opened')
-  }
-  // 监听消息事件
-  socket.onmessage = async (event) => {
-    const messageData = JSON.parse(event.data)
-    console.log('WebSocket message received:', messageData)
-
-    if (messageData.type === 'offer') {
-      console.log('Received offer:', messageData)
-      await handleOffer(messageData)
-    } else if (messageData.type === 'answer') {
-      console.log('Received answer:', messageData)
-      await handleAnswer(messageData)
-    } else if (messageData.type === 'candidate') {
-      console.log('Received ICE candidate:', messageData)
-      await handleCandidate(messageData)
-    } else if (messageData.type === 'chat') {
-      console.log('Received chat message:', messageData)
-      if (messageData.senderName !== userRole.value) {
-        messages.value.push({
-          sender: messageData.senderName,
-          timestamp: new Date(messageData.sendAt).getTime(),
-          text: messageData.content,
-        })
-      }
-    }
-  }
-
-  socket.onclose = () => {
-    console.log('WebSocket connection closed')
-  }
-
-  socket.onerror = (error) => {
-    console.error('WebSocket error:', error)
-  }
-}
-
-const createPeerConnection = () => {
-  // 创建 RTCPeerConnection 实例，配置 STUN 服务器
-  console.log('Creating RTCPeerConnection...')
-  peerConnection = new RTCPeerConnection({
-    iceServers: [
-      { urls: 'stun:172.24.4.159:3478' },
-    ],
-  })
-
-  // 监听 ICE 候选者事件
-  peerConnection.onicecandidate = (event) => {
-    if (event.candidate) {
-      console.log('ICE Candidate generated:', event.candidate)
-      const candidateMessage = {
-        type: 'candidate',
-        candidate: event.candidate,
-      }
-      console.log('Sending ICE candidate to remote peer:', candidateMessage)
-      socket.send(JSON.stringify(candidateMessage))
-    } else {
-      console.log('All ICE candidates have been sent')
-    }
-  }
-
-  // 监听信令状态变化
-  peerConnection.onsignalingstatechange = () => {
-    console.log('Current signaling state:', peerConnection.signalingState)
-  }
-
-  // 监听 ICE 连接状态变化
-  peerConnection.oniceconnectionstatechange = () => {
-    console.log('ICE connection state changed:', peerConnection.iceConnectionState)
-    if (peerConnection.iceConnectionState === 'connected' || peerConnection.iceConnectionState === 'completed') {
-      console.log('WebRTC connection established successfully.')
-    } else if (peerConnection.iceConnectionState === 'failed') {
-      console.error('ICE connection failed. Please check your network and STUN/TURN server configuration.')
-    } else if (peerConnection.iceConnectionState === 'disconnected') {
-      console.warn('ICE connection disconnected. Attempting to reconnect...')
-    } else if (peerConnection.iceConnectionState === 'closed') {
-      console.log('ICE connection closed.')
-    }
-  }
-
-  // 监听远程视频流
-  peerConnection.ontrack = (event) => {
-    console.log('remoteVideoRef:', remoteVideoRef.value)
-    const remotevideoElement = remoteVideoRef.value
-    if (remotevideoElement) {
-      console.log('Remote track received:', event.streams[0])
-      remotevideoElement.srcObject = event.streams[0]
-      isRemoteVideoOn.value = true
-      remotevideoElement.playsInline = true
-      remotevideoElement.play().catch(err => {
-        console.error('视频播放错误:', err)
-      })
-      console.log('Remote video stream set to video element.')
-    }
-  }
-}
-
-const handleOffer = async (message) => {
-  console.log('Handling offer:', message)
-  if (!peerConnection) {
-    // 如果 peerConnection 不存在，则创建一个新的
-    createPeerConnection()
-  }
-  await peerConnection.setRemoteDescription(
-    // 设置远程描述
-    new RTCSessionDescription({ type: 'offer', sdp: message.sdp })
-  )
-  // 创建并发送应答
-  const answer = await peerConnection.createAnswer()
-  // 设置本地描述
-  await peerConnection.setLocalDescription(answer)
-  console.log('Local description set with answer:', answer)
-
-  const answerMessage = {
-    type: 'answer',
-    sdp: answer.sdp,
-  }
-
-  console.log('Sending answer:', answerMessage)
-  socket.send(JSON.stringify(answerMessage))
-  console.log('Answer sent.')
-
-}
-
-const handleAnswer = async (message) => {
-  console.log('Handling answer:', message)
-  if (!peerConnection) {
-    console.error('PeerConnection is not initialized.')
-    return
-  }
-  if (peerConnection.signalingState !== 'have-local-offer') {
-    console.error('Cannot set remote answer in state:', peerConnection.signalingState)
-    return
-  }
-  // 设置远程描述
-  await peerConnection.setRemoteDescription(
-    new RTCSessionDescription({ type: 'answer', sdp: message.sdp })
-  )
-  console.log('Remote description set with answer.')
-
-  // 确保显示远程视频区域
-  isCameraOn.value = true
-}
-
-// 处理接收到的 ICE 候选者
-const handleCandidate = async (message) => {
-  console.log('Handling received ICE candidate:', message.candidate)
-  try {
-    const candidate = new RTCIceCandidate(message.candidate)
-    // 如果远程描述已经设置，则直接添加 ICE 候选者
-    await peerConnection.addIceCandidate(candidate)
-    console.log('ICE candidate added successfully.')
-  } catch (error) {
-    console.error('Error adding received ICE candidate:', error)
-  }
-}
-
-const sendMessage = (message, sender) => {
-  if (message.trim() !== '') {
-    const now = new Date()
-    const formattedDate = now.toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    }).replace(/\//g, '-').replace(',', '')
-
-    const messageData = {
-      type: 'chat',
-      content: message.trim(),
-      sendAt: formattedDate,
-      senderName: sender
-    }
-
-    if (socket) {
-      console.log('Sending ' + messageData.type + ' message:', messageData)
-      socket.send(JSON.stringify(messageData))
-    }
-
-    messages.value.push({
-      sender: sender,
-      timestamp: Date.now(),
-      text: message.trim()
-    })
-    newMessage.value = '' // 清空输入区域
-  }
-}
-
 // 开始面试函数
 const startInterview = async () => {
   try {
-    if (mediaStream.value) {
-      mediaStream.value.getTracks().forEach(track => track.stop())
-      mediaStream.value = null
-      isCameraOn.value = false
-    }
-
-    if (!peerConnection || peerConnection.signalingState === 'closed') {
-      createPeerConnection()
-    }
-
-    mediaStream.value = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-    const videoElement = localVideoRef.value
-    console.log('localVideoRef:', videoElement)
-    if (videoElement) {
-      videoElement.srcObject = mediaStream.value
-      videoElement.muted = true
-      videoElement.playsInline = true
-      await videoElement.play().catch(err => {
-        console.error('视频播放错误:', err)
-      })
-    }
-
-    // Add local tracks to peer connection
-    mediaStream.value.getTracks().forEach((track) => {
-      peerConnection.addTrack(track, mediaStream.value)
-    })
-
-    // Create and send offer
-    const offer = await peerConnection.createOffer()
-    await peerConnection.setLocalDescription(offer)
-    console.log('Local description set with offer:', offer)
-    socket.send(JSON.stringify({ type: 'offer', sdp: offer.sdp }))
-
-    isCameraOn.value = true
 
     toast({
       title: "Success",
@@ -310,20 +73,6 @@ const startInterview = async () => {
 // 停止面试函数
 const stopInterview = () => {
   try {
-    if (mediaStream.value) {
-      mediaStream.value.getTracks().forEach(track => track.stop())
-      mediaStream.value = null
-    }
-    if (localVideoRef.value) {
-      localVideoRef.value.srcObject = null
-    }
-    isCameraOn.value = false
-    isRemoteVideoOn.value = false // 重置远程视频状态
-
-    if (peerConnection) {
-      peerConnection.close()
-      peerConnection = null
-    }
 
     toast({
       title: "Success",
@@ -376,9 +125,6 @@ function fetchInterviewMetadata() {
   }
 }
 
-const handleSubmit = () => {
-  sendMessage(newMessage.value, userRole.value)
-}
 </script>
 
 <template>
@@ -404,12 +150,13 @@ const handleSubmit = () => {
               <div class="relative flex-1 overflow-hidden rounded-xl bg-slate-100">
                 <div class="flex h-full">
                   <div class="relative h-full w-1/2 bg-gray-300 rounded-xl">
+                  <!-- video1 -->
                     <video
+                      id="localVideo"
                       ref="localVideoRef"
-                      autoplay
                       muted
                       playsinline
-                      class="h-full w-full rounded-xl object-cover"
+                      class="local h-full w-full rounded-xl object-cover"
                     />
                     <div v-show="!isCameraOn" 
                          class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
@@ -420,10 +167,13 @@ const handleSubmit = () => {
                     </div>
                   </div>
                   <div class="relative h-full w-1/2 bg-gray-300 rounded-xl">
+                    <!-- video2 -->
                     <video
+                      id="remoteVideo"
                       ref="remoteVideoRef"
+                      autoplay
                       playsinline
-                      class="h-full w-full rounded-xl object-cover"
+                      class="remote h-full w-full rounded-xl object-cover"
                     />
                     <div v-show="!isRemoteVideoOn" 
                          class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
