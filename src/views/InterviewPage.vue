@@ -21,9 +21,10 @@ const remoteVideoRef = ref<HTMLVideoElement | null>(null)
 const mediaStream = ref<MediaStream | null>(null)
 const usingroomnumber = ref('')
 const isCameraOn = ref(false)
+const isRemoteVideoOn = ref(false) // 新增状态变量
 let peerConnection: RTCPeerConnection | null = null
 let remoteDescriptionSet = false;
-const queuedCandidates = [];
+const queuedCandidates = []
 
 // 示例聊天消息
 const messages = ref([
@@ -43,13 +44,6 @@ const roleMapping = {
 const userRole = ref(roleMapping[localStorage.getItem('role')] || '未知角色')
 let socket: WebSocket | null = null
 
-const configuration = {
-  iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-  ],
-};
-
 // 初始化房间号，从url中的interviewId=tk3xjf 获得
 onMounted(() => {
   usingroomnumber.value = getQueryParam('interviewId') || ''
@@ -65,141 +59,171 @@ onBeforeUnmount(() => {
 })
 
 const connectWebSocket = () => {
-  console.log('Connecting to WebSocket...');
-  socket = new WebSocket('ws://localhost:8080/chat');
+  console.log('Connecting to WebSocket...')
+  socket = new WebSocket('ws://localhost:8080/chat')
 
   socket.onopen = () => {
-    console.log('WebSocket connection opened');
-  };
-
+    console.log('WebSocket connection opened')
+  }
+  // 监听消息事件
   socket.onmessage = async (event) => {
-    const messageData = JSON.parse(event.data);
-    console.log('WebSocket message received:', messageData);
+    const messageData = JSON.parse(event.data)
+    console.log('WebSocket message received:', messageData)
 
     if (messageData.type === 'offer') {
-      console.log('Received offer:', messageData);
-      await handleOffer(messageData);
+      console.log('Received offer:', messageData)
+      await handleOffer(messageData)
     } else if (messageData.type === 'answer') {
-      console.log('Received answer:', messageData);
-      await handleAnswer(messageData);
+      console.log('Received answer:', messageData)
+      await handleAnswer(messageData)
     } else if (messageData.type === 'candidate') {
-      console.log('Received ICE candidate:', messageData);
-      await handleCandidate(messageData);
+      console.log('Received ICE candidate:', messageData)
+      await handleCandidate(messageData)
     } else if (messageData.type === 'chat') {
-      console.log('Received chat message:', messageData);
+      console.log('Received chat message:', messageData)
       if (messageData.senderName !== userRole.value) {
         messages.value.push({
           sender: messageData.senderName,
           timestamp: new Date(messageData.sendAt).getTime(),
           text: messageData.content,
-        });
+        })
       }
     }
-  };
+  }
 
   socket.onclose = () => {
-    console.log('WebSocket connection closed');
-  };
+    console.log('WebSocket connection closed')
+  }
 
   socket.onerror = (error) => {
-    console.error('WebSocket error:', error);
-  };
-};
+    console.error('WebSocket error:', error)
+  }
+}
 
 const createPeerConnection = () => {
-  console.log('Creating RTCPeerConnection...');
+  // 创建 RTCPeerConnection 实例，配置 STUN 服务器
+  console.log('Creating RTCPeerConnection...')
   peerConnection = new RTCPeerConnection({
     iceServers: [
-      { urls: 'stun:stun.l.google.com:19302' },
-      // 可以添加更多的 STUN 服务器
+      { urls: 'stun:172.24.4.159:3478' },
     ],
-  });
-  
+  })
+
+  // 监听 ICE 候选者事件
   peerConnection.onicecandidate = (event) => {
     if (event.candidate) {
-      console.log('ICE Candidate:', event.candidate);
+      console.log('ICE Candidate generated:', event.candidate)
       const candidateMessage = {
         type: 'candidate',
         candidate: event.candidate,
-      };
-      socket.send(JSON.stringify(candidateMessage));
+      }
+      console.log('Sending ICE candidate to remote peer:', candidateMessage)
+      socket.send(JSON.stringify(candidateMessage))
+    } else {
+      console.log('All ICE candidates have been sent')
     }
-  };
+  }
 
-  peerConnection.ontrack = (event) => {
-    console.log('Remote track received:', event.streams[0]);
-    if (remoteVideoRef.value) {
-      remoteVideoRef.value.srcObject = event.streams[0];
+  // 监听信令状态变化
+  peerConnection.onsignalingstatechange = () => {
+    console.log('Current signaling state:', peerConnection.signalingState)
+  }
+
+  // 监听 ICE 连接状态变化
+  peerConnection.oniceconnectionstatechange = () => {
+    console.log('ICE connection state changed:', peerConnection.iceConnectionState)
+    if (peerConnection.iceConnectionState === 'connected' || peerConnection.iceConnectionState === 'completed') {
+      console.log('WebRTC connection established successfully.')
+    } else if (peerConnection.iceConnectionState === 'failed') {
+      console.error('ICE connection failed. Please check your network and STUN/TURN server configuration.')
+    } else if (peerConnection.iceConnectionState === 'disconnected') {
+      console.warn('ICE connection disconnected. Attempting to reconnect...')
+    } else if (peerConnection.iceConnectionState === 'closed') {
+      console.log('ICE connection closed.')
     }
-  };
-  console.log('RTCPeerConnection created.');
-};
+  }
+
+  // 监听远程视频流
+  peerConnection.ontrack = (event) => {
+    console.log('Remote track received:', event.streams[0])
+    const remotevideoElement = remoteVideoRef.value
+    if (remotevideoElement) {
+      remotevideoElement.srcObject = event.streams[0]
+      isRemoteVideoOn.value = true // 设置远程视频状态为开启
+      remotevideoElement.playsInline = true
+      remotevideoElement.play().catch(err => {
+        console.error('视频播放错误:', err)
+      })
+      console.log('Remote video stream set to video element.')
+    }
+  }
+}
 
 const handleOffer = async (message) => {
-  console.log('Handling offer:', message);
+  console.log('Handling offer:', message)
   if (!peerConnection) {
-    createPeerConnection();
+    // 如果 peerConnection 不存在，则创建一个新的
+    createPeerConnection()
   }
   await peerConnection.setRemoteDescription(
+    // 设置远程描述
     new RTCSessionDescription({ type: 'offer', sdp: message.sdp })
-  );
-  remoteDescriptionSet = true;
-  // 添加已缓存的 ICE 候选
-  for (const candidate of queuedCandidates) {
-    await peerConnection.addIceCandidate(candidate);
-  }
-  queuedCandidates.length = 0; // 清空队列
-
-  if (mediaStream.value) {
-    console.log('Adding local tracks to peer connection.');
-    mediaStream.value.getTracks().forEach((track) => {
-      if (!peerConnection.getSenders().find(sender => sender.track === track)) {
-        peerConnection.addTrack(track, mediaStream.value);
-      }
-    });
-  }
-
-  const answer = await peerConnection.createAnswer();
-  await peerConnection.setLocalDescription(answer);
-  console.log('Local description set with answer:', answer);
+  )
+  // 创建并发送应答
+  const answer = await peerConnection.createAnswer()
+  // 设置本地描述
+  await peerConnection.setLocalDescription(answer)
+  console.log('Local description set with answer:', answer)
 
   const answerMessage = {
     type: 'answer',
     sdp: answer.sdp,
-  };
-  socket.send(JSON.stringify(answerMessage));
-  console.log('Answer sent.');
-};
+  }
+
+  console.log('Sending answer:', answerMessage)
+  socket.send(JSON.stringify(answerMessage))
+  console.log('Answer sent.')
+
+  // 确保显示远程视频区域
+  isCameraOn.value = true
+}
 
 const handleAnswer = async (message) => {
-  console.log('Handling answer:', message);
+  console.log('Handling answer:', message)
   if (!peerConnection) {
-    console.error('PeerConnection is not initialized.');
-    return;
+    console.error('PeerConnection is not initialized.')
+    return
   }
   if (peerConnection.signalingState !== 'have-local-offer') {
-    console.error('Cannot set remote answer in state:', peerConnection.signalingState);
-    return;
+    console.error('Cannot set remote answer in state:', peerConnection.signalingState)
+    return
   }
+  // 设置远程描述
   await peerConnection.setRemoteDescription(
     new RTCSessionDescription({ type: 'answer', sdp: message.sdp })
-  );
-  console.log('Remote description set with answer.');
-};
+  )
+  console.log('Remote description set with answer.')
 
+  // 确保显示远程视频区域
+  isCameraOn.value = true
+}
+
+// 处理接收到的 ICE 候选者
 const handleCandidate = async (message) => {
-  console.log('Handling ICE candidate:', message.candidate);
-  const candidate = new RTCIceCandidate(message.candidate);
-  if (remoteDescriptionSet) {
-    await peerConnection.addIceCandidate(candidate);
-  } else {
-    queuedCandidates.push(candidate);
+  console.log('Handling received ICE candidate:', message.candidate)
+  try {
+    const candidate = new RTCIceCandidate(message.candidate)
+    // 如果远程描述已经设置，则直接添加 ICE 候选者
+    await peerConnection.addIceCandidate(candidate)
+    console.log('ICE candidate added successfully.')
+  } catch (error) {
+    console.error('Error adding received ICE candidate:', error)
   }
-};
+}
 
 const sendMessage = (message, sender) => {
   if (message.trim() !== '') {
-    const now = new Date();
+    const now = new Date()
     const formattedDate = now.toLocaleString('zh-CN', {
       year: 'numeric',
       month: '2-digit',
@@ -208,28 +232,28 @@ const sendMessage = (message, sender) => {
       minute: '2-digit',
       second: '2-digit',
       hour12: false
-    }).replace(/\//g, '-').replace(',', '');
+    }).replace(/\//g, '-').replace(',', '')
 
     const messageData = {
       type: 'chat',
       content: message.trim(),
       sendAt: formattedDate,
       senderName: sender
-    };
+    }
 
     if (socket) {
-      console.log('Sending message:', messageData);
-      socket.send(JSON.stringify(messageData));
+      console.log('Sending ' + messageData.type + ' message:', messageData)
+      socket.send(JSON.stringify(messageData))
     }
 
     messages.value.push({
       sender: sender,
       timestamp: Date.now(),
       text: message.trim()
-    });
-    newMessage.value = ''; // 清空输入区域
+    })
+    newMessage.value = '' // 清空输入区域
   }
-};
+}
 
 // 开始面试函数
 const startInterview = async () => {
@@ -241,7 +265,7 @@ const startInterview = async () => {
     }
 
     if (!peerConnection || peerConnection.signalingState === 'closed') {
-      createPeerConnection();
+      createPeerConnection()
     }
 
     mediaStream.value = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
@@ -264,6 +288,7 @@ const startInterview = async () => {
     // Create and send offer
     const offer = await peerConnection.createOffer()
     await peerConnection.setLocalDescription(offer)
+    console.log('Local description set with offer:', offer)
     socket.send(JSON.stringify({ type: 'offer', sdp: offer.sdp }))
 
     isCameraOn.value = true
@@ -294,6 +319,7 @@ const stopInterview = () => {
       localVideoRef.value.srcObject = null
     }
     isCameraOn.value = false
+    isRemoteVideoOn.value = false // 重置远程视频状态
 
     if (peerConnection) {
       peerConnection.close()
@@ -333,22 +359,22 @@ const redirectToInterviewResult = (interviewId: string, interviewer: string) => 
 }
 
 function getQueryParam(param: string) {
-  const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get(param);
+  const urlParams = new URLSearchParams(window.location.search)
+  return urlParams.get(param)
 }
 
 const interviewMetadata = ref({
   interviewId: '',
   interviewer: '',
   interviewee: ''
-});
+})
 
 function fetchInterviewMetadata() {
   interviewMetadata.value = {
     interviewId: getQueryParam('interviewId'),
     interviewer: getQueryParam('interviewer'),
     interviewee: getQueryParam('interviewee')
-  };
+  }
 }
 
 const handleSubmit = () => {
@@ -387,12 +413,11 @@ const handleSubmit = () => {
                   />
                   <video
                     ref="remoteVideoRef"
-                    autoplay
                     playsinline
                     class="h-full w-1/2 rounded-xl object-cover"
                   />
                 </div>
-                <div v-show="!isCameraOn" 
+                <div v-show="!isCameraOn && !isRemoteVideoOn" 
                      class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
                   <img :src="CameraIcon" alt="Camera Off" class="h-32 w-32 opacity-40" />
                   <p class="mt-4 text-sm text-muted-foreground">
