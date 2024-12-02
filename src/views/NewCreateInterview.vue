@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import { z } from 'zod'
@@ -51,6 +51,7 @@ import {
 } from '@internationalized/date'
 import { Calendar } from '@/components/ui/calendar'
 import router from '@/router'
+import axios from 'axios'
 
 const df = new DateFormatter('zh-CN', {
   dateStyle: 'long',
@@ -83,19 +84,49 @@ const interviewees = ref([
   {
     id: '1',
     name: '张三',
-    email: 'zhangsan@example.com',
+    profile: 'zhangsan@example.com',
+    score: 80
   },
   {
     id: '2',
     name: '李四',
-    email: 'lisi@example.com',
+    profile: 'lisi@example.com',
+    score: 90
   },
   {
     id: '3',
     name: '王五',
-    email: 'wangwu@example.com',
+    profile: 'wangwu@example.com',
+    score: 85
   },
 ])
+
+const fetchInterviewees = async () => {
+  try {
+    const response = await axios.get('http://localhost:8080/interviewee/showAll', {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    if (response.data.code === '0') {
+      interviewees.value = response.data.data.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        profile: item.profile,
+        // 随机分配笔试分数,70-100之间
+        score: Math.floor(Math.random() * 30 + 70)
+      }))
+    } else {
+      console.error('Failed to fetch interviewees:', response.data.msg)
+    }
+  } catch (error) {
+    console.error('Failed to fetch interviewees:', error)
+  }
+}
+
+onMounted(() => {
+  fetchInterviewees()
+})
 
 const { handleSubmit, setFieldValue, values } = useForm({
   validationSchema: formSchema,
@@ -170,8 +201,8 @@ const onSubmit = handleSubmit((values) => {
                     :src="`https://avatars.dicebear.com/api/avataaars/${interviewee.name}.svg`"
                     :alt="interviewee.name" />
                   <p class="text-lg">{{ interviewee.name }}</p>
-                  <p class="text-lg">{{ interviewee.email }}</p>
-                  <p class="text-md mt-4">简历内容...</p>
+                  <p class="text-lg">{{ interviewee.profile }}</p>
+                  <p class="text-lg">笔试分数：{{ interviewee.score }}</p>
                   <!-- 在这里添加更多简历内容 -->
                 </CardContent>
               </Card>
@@ -179,12 +210,12 @@ const onSubmit = handleSubmit((values) => {
           </CarouselItem>
         </CarouselContent>
         <CarouselPrevious>
-          <button type="button" class="carousel-control-prev">
+          <button type="button" class="carousel-control-prev" @click.prevent>
             <Icon icon="radix-icons:chevron-left" />
           </button>
         </CarouselPrevious>
         <CarouselNext>
-          <button type="button" class="carousel-control-next">
+          <button type="button" class="carousel-control-next" @click.prevent>
             <Icon icon="radix-icons:chevron-right" />
           </button>
         </CarouselNext>
@@ -255,7 +286,7 @@ const onSubmit = handleSubmit((values) => {
                     class="w-[400px] inline-flex items-center justify-between rounded-lg p-2 text-[13px] leading-none gap-[5px] bg-background text-grass11 shadow-[0_2px_10px] shadow-black/10 hover:bg-mauve3 focus:shadow-[0_0_0_2px] focus:shadow-black data-[placeholder]:text-grass9 outline-none">
                     <TagsInputRoot v-slot="{ modelValue: tags }" :model-value="selectedInterviewee" delimiter=""
                       class="flex gap-2 items-center rounded-lg flex-wrap">
-                      <TagsInputItem v-for="item in tags" :key="item" :value="item"
+                      <TagsInputItem v-for="item in tags" :key="item.toString()" :value="item"
                         class="flex items-center justify-center gap-2 text-black bg-gray-200 aria-[current=true]:bg-gray-300 rounded px-2 py-1">
                         <TagsInputItemText class="text-sm">
                           {{ item }}

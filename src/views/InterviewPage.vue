@@ -16,16 +16,15 @@ import CameraIcon from '@/assets/camera.svg'
 
 const router = useRouter()
 const { toast } = useToast()
-const videoRef = ref<HTMLVideoElement | null>(null)
 const mediaStream = ref<MediaStream | null>(null)
 const usingroomnumber = ref('')
 const isCameraOn = ref(false)
+const isRemoteVideoOn = ref(false) // 新增状态变量
+const queuedCandidates = []
 
 // 示例聊天消息
 const messages = ref([
   { sender: '系统消息', timestamp: 1833028400000, text: '面试即将开始，请双方做好准备！' },
-  { sender: '面试官', timestamp: 1833028400000, text: '你好，请问你的姓名是？' },
-  { sender: '面试者', timestamp: 1833028400000, text: '我叫小明，很高兴认识您！' },
 ])
 const getVariant = (sender: string) => {
   if (sender === '面试官') return 'outline'
@@ -45,7 +44,6 @@ let socket: WebSocket | null = null
 onMounted(() => {
   usingroomnumber.value = getQueryParam('interviewId') || ''
   fetchInterviewMetadata()
-  connectWebSocket()
 })
 
 onBeforeUnmount(() => {
@@ -54,53 +52,9 @@ onBeforeUnmount(() => {
   }
 })
 
-const connectWebSocket = () => {
-  socket = new WebSocket('ws://localhost:8080/chat')
-
-  socket.onmessage = (event) => {
-    const messageData = JSON.parse(event.data)
-    // 检查消息的发送者是否是当前用户
-    if (messageData.senderName !== userRole.value) {
-      messages.value.push({
-        sender: messageData.senderName,
-        timestamp: new Date(messageData.sendAt).getTime(),
-        text: messageData.content
-      })
-    }
-  }
-
-  socket.onclose = () => {
-    console.log('WebSocket connection closed')
-  }
-
-  socket.onerror = (error) => {
-    console.error('WebSocket error:', error)
-  }
-}
-
 // 开始面试函数
 const startInterview = async () => {
   try {
-    if (mediaStream.value) {
-      mediaStream.value.getTracks().forEach(track => track.stop())
-      mediaStream.value = null
-      isCameraOn.value = false
-    }
-
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-    const videoElement = videoRef.value
-
-    if (videoElement) {
-      videoElement.srcObject = stream
-      videoElement.muted = true
-      videoElement.playsInline = true
-      await videoElement.play().catch(err => {
-        console.error('视频播放错误:', err)
-      })
-    }
-
-    mediaStream.value = stream
-    isCameraOn.value = true
 
     toast({
       title: "Success",
@@ -120,14 +74,6 @@ const startInterview = async () => {
 // 停止面试函数
 const stopInterview = () => {
   try {
-    if (mediaStream.value) {
-      mediaStream.value.getTracks().forEach(track => track.stop())
-      mediaStream.value = null
-    }
-    if (videoRef.value) {
-      videoRef.value.srcObject = null
-    }
-    isCameraOn.value = false
 
     toast({
       title: "Success",
@@ -161,69 +107,25 @@ const redirectToInterviewResult = (interviewId: string, interviewer: string) => 
   window.location.href = url.toString()
 }
 
-const redirectToInterviewScore = (interviewId: string, interviewee: string) => {
-  const baseUrl = 'http://localhost:5173/score?'
-  const url = new URL(baseUrl)
-  url.searchParams.append('interviewId', interviewId)
-  url.searchParams.append('interviewee', interviewee)
-
-  window.location.href = url.toString()
-}
-
-const sendMessage = (message, sender) => {
-  if (message.trim() !== '') {
-    const now = new Date()
-    const formattedDate = now.toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    }).replace(/\//g, '-').replace(',', '')
-
-    const messageData = {
-      content: message.trim(),
-      sendAt: formattedDate, // 当前时间
-      senderName: sender
-    }
-
-    if (socket) {
-      socket.send(JSON.stringify(messageData))
-    }
-
-    messages.value.push({
-      sender: sender,
-      timestamp: Date.now(),
-      text: message.trim()
-    })
-    newMessage.value = '' // 清空输入区域
-  }
-}
-
 function getQueryParam(param: string) {
-  const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get(param);
+  const urlParams = new URLSearchParams(window.location.search)
+  return urlParams.get(param)
 }
 
 const interviewMetadata = ref({
   interviewId: '',
   interviewer: '',
   interviewee: ''
-});
+})
 
 function fetchInterviewMetadata() {
   interviewMetadata.value = {
     interviewId: getQueryParam('interviewId'),
     interviewer: getQueryParam('interviewer'),
     interviewee: getQueryParam('interviewee')
-  };
+  }
 }
 
-const handleSubmit = () => {
-  sendMessage(newMessage.value, userRole.value)
-}
 </script>
 
 <template>
@@ -247,20 +149,41 @@ const handleSubmit = () => {
             
             <CardContent class="flex flex-1 flex-col gap-6 p-6 h-full">
               <div class="relative flex-1 overflow-hidden rounded-xl bg-slate-100">
-                <video 
-                  v-show="isCameraOn" 
-                  ref="videoRef" 
-                  autoplay 
-                  muted 
-                  playsinline 
-                  class="h-full w-full rounded-xl object-cover transition-opacity duration-200"
-                />
-                <div v-show="!isCameraOn" 
-                     class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-                  <img :src="CameraIcon" alt="Camera Off" class="h-32 w-32 opacity-40" />
-                  <p class="mt-4 text-sm text-muted-foreground">
-                    摄像头未开启，请点击"开始面试"按钮
-                  </p>
+                <div class="flex h-full">
+                  <div class="relative h-full w-1/2 bg-gray-300 rounded-xl">
+                  <!-- video1 -->
+                    <video
+                      id="localVideo"
+                      ref="localVideoRef"
+                      muted
+                      playsinline
+                      class="local h-full w-full rounded-xl object-cover"
+                    />
+                    <div v-show="!isCameraOn" 
+                         class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+                         <img :src="CameraIcon" alt="Camera Off" class="h-32 w-32 opacity-40" />
+                      <p class="mt-4 text-sm text-muted-foreground">
+                        暂未接收到本地视频流
+                      </p>
+                    </div>
+                  </div>
+                  <div class="relative h-full w-1/2 bg-gray-300 rounded-xl">
+                    <!-- video2 -->
+                    <video
+                      id="remoteVideo"
+                      ref="remoteVideoRef"
+                      autoplay
+                      playsinline
+                      class="remote h-full w-full rounded-xl object-cover"
+                    />
+                    <div v-show="!isRemoteVideoOn" 
+                         class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+                         <img :src="CameraIcon" alt="Camera Off" class="h-32 w-32 opacity-40" />
+                      <p class="mt-4 text-sm text-muted-foreground">
+                        暂未接收到远程视频流
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -279,7 +202,6 @@ const handleSubmit = () => {
                   variant="destructive"
                   class="flex-1 font-medium"
                   size="lg"
-                  :disabled="!isCameraOn"
                 >
                   结束面试
                 </Button>
